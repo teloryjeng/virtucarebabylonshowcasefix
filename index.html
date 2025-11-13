@@ -65,10 +65,10 @@
       // ================================
 // Kamera sebagai "Player" (POV manusia)
 // ================================
-const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(-15, 6, 0), scene);
+const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(-15, 4, 0), scene);
     camera.attachControl(canvas, true);
     camera.applyGravity = true;
-    camera.ellipsoid = new BABYLON.Vector3(0.5, 4, 0.5);
+    camera.ellipsoid = new BABYLON.Vector3(0.5, 2, 0.5);
     camera.checkCollisions = true;
     camera.speed = 0.2;
     camera.keysUp.push(87); camera.keysDown.push(83); camera.keysLeft.push(65); camera.keysRight.push(68); 
@@ -107,31 +107,43 @@ try {
           cameraOptions:{
             checkCollisions: true,
             applyGravity: true,
-            ellipsoid: new BABYLON.Vector3(0.5, 4, 0.5)
+            ellipsoid: new BABYLON.Vector3(0.5, 2, 0.5)
           }
         });
         console.log("✅ WebXR aktif");
         const xrCamera = xr.baseExperience.camera;
-        xrCamera.position.y = 6;
         xrCamera.applyGravity = true;
         xrCamera.checkCollisions = true;
 
-        xr.baseExperience.featuresManager.enableFeature(
-          BABYLON.WebXRFeatureName.MOVEMENT,
-          "latest",
-          {
-            xrInput: xr.input,
-            movementSpeed: 0.1,
-            rotationSpeed: 0.2,
-            movementControls: ["left-xr-standard-thumbstick"],
-            rotationControls: ["right-xr-standard-thumbstick"],
-            useThumbstickForMovement: true,
-            disableTeleportOnThumbstick: true,
-            checkCollisions: true,
-            applyGravity: true,
-            ellipsoid: new BABYLON.Vector3(0.5, 4, 0.5)
-          }
-        );
+        const movementFeature = xr.baseExperience.featuresManager.enableFeature(
+          BABYLON.WebXRFeatureName.MOVEMENT,
+          "latest",
+          {
+            xrInput: xr.input,
+            movementSpeed: 0.1,
+            rotationSpeed: 0.2,
+            movementControls: ["left-xr-standard-thumbstick"],
+            rotationControls: ["right-xr-standard-thumbstick"],
+            useThumbstickForMovement: true,
+            disableTeleportOnThumbstick: true,
+            checkCollisions: true,
+            applyGravity: true,
+            // Pastikan ellipsoid Y diatur ke tinggi yang wajar, misalnya 2
+            ellipsoid: new BABYLON.Vector3(0.5, 2, 0.5) 
+          }
+        );
+
+        // 2. Terapkan posisi awal segera setelah feature Movement diaktifkan
+        // Angka 2 di sini adalah ketinggian tambahan yang diinginkan
+        xrCamera.position.y = 4; 
+
+        // 3. Tambahkan listener agar posisi dipertahankan saat memasuki/keluar XR
+        xr.baseExperience.onStateChangedObservable.add((state) => {
+            if (state === BABYLON.WebXRState.IN_XR) {
+                // Atur posisi awal saat masuk VR, Y=2 adalah ketinggian yang diinginkan
+                xrCamera.position.y = 4; 
+            }
+        });
       } catch (e) {
         console.warn("⚠️ WebXR tidak didukung, pakai mode biasa:", e);
         scene.activeCamera = camera;
