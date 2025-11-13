@@ -65,10 +65,10 @@
       // ================================
 // Kamera sebagai "Player" (POV manusia)
 // ================================
-const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(-15, 4, 0), scene);
+const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(-15, 6, 0), scene);
     camera.attachControl(canvas, true);
     camera.applyGravity = true;
-    camera.ellipsoid = new BABYLON.Vector3(0.5, 2, 0.5);
+    camera.ellipsoid = new BABYLON.Vector3(0.5, 4, 0.5);
     camera.checkCollisions = true;
     camera.speed = 0.2;
     camera.keysUp.push(87); camera.keysDown.push(83); camera.keysLeft.push(65); camera.keysRight.push(68); 
