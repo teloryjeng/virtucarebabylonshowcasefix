@@ -1,121 +1,121 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8" />
-  <title>ShowCase</title>
-  <style>
-    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
-    #renderCanvas { width: 100%; height: 100%; touch-action: none; }
-  </style>
+  <meta charset="utf-8" />
+  <title>ShowCase</title>
+  <style>
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    #renderCanvas { width: 100%; height: 100%; touch-action: none; }
+  </style>
 
-  <!-- Babylon.js Core + GLTF Loader + Physics Engine -->
-  <script src="https://cdn.babylonjs.com/babylon.js"></script>
-  <script src="https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.min.js"></script>
-  <script src="https://cdn.babylonjs.com/ammo.js"></script>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+  <script src="https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.min.js"></script>
+  <script src="https://cdn.babylonjs.com/ammo.js"></script>
 
-  <!-- file JS eksternal untuk fisika -->
-  <script src="js/physics.js"></script>
+    <script src="js/physics.js"></script>
 
 
 </head>
 <body>
-  <canvas id="renderCanvas"></canvas>
+  <canvas id="renderCanvas"></canvas>
 
-  <script>
-    // ================================
-    // Inisialisasi Engine & Canvas
-    // ================================
-    const canvas = document.getElementById("renderCanvas");
-    const engine = new BABYLON.Engine(canvas, true);
+  <script>
+    // ================================
+    // Inisialisasi Engine & Canvas
+    // ================================
+    const canvas = document.getElementById("renderCanvas");
+    const engine = new BABYLON.Engine(canvas, true);
 
-    // ================================
-    // Fungsi utama: Membuat Scene
-    // ================================
-    const createScene = async function () {
-      const scene = new BABYLON.Scene(engine);
-      scene.clearColor = new BABYLON.Color3(0.9, 0.9, 0.95);
+    // ================================
+    // Fungsi utama: Membuat Scene
+    // ================================
+    const createScene = async function () {
+      const scene = new BABYLON.Scene(engine);
+      scene.clearColor = new BABYLON.Color3(0.9, 0.9, 0.95);
 
-      // Aktifkan sistem fisika dari file physics.js
-      await enablePhysics(scene);
+      // Aktifkan sistem fisika dari file physics.js
+      await enablePhysics(scene);
 
-      // ================================
-      // Buat ground (lantai dunia)
-      // ================================
-      const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 100, height: 100 }, scene);
-      ground.checkCollisions = true;
-      ground.position.y = 0;
+      // ================================
+      // Buat ground (lantai dunia)
+      // ================================
+      const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 100, height: 100 }, scene);
+      ground.checkCollisions = true;
+      ground.position.y = 0;
 
-      // Tambahkan Physics Impostor agar terpengaruh fisika
-      ground.physicsImpostor = new BABYLON.PhysicsImpostor(
-        ground,
-        BABYLON.PhysicsImpostor.BoxImpostor,
-        { mass: 0, restitution: 0.9 },
-        scene
-      );
+      // Tambahkan Physics Impostor agar terpengaruh fisika
+      ground.physicsImpostor = new BABYLON.PhysicsImpostor(
+        ground,
+        BABYLON.PhysicsImpostor.BoxImpostor,
+        { mass: 0, restitution: 0.9 },
+        scene
+      );
 
-      // ================================
-      // Cahaya dan Arah
-      // ================================
-      const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
-      light.intensity = 0.7;
+      // ================================
+      // Cahaya dan Arah
+      // ================================
+      const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+      light.intensity = 0.7;
 
-      const dirLight = new BABYLON.DirectionalLight("dirLight", new BABYLON.Vector3(-1, -2, -1), scene);
-      dirLight.intensity = 1;
+      const dirLight = new BABYLON.DirectionalLight("dirLight", new BABYLON.Vector3(-1, -2, -1), scene);
+      dirLight.intensity = 1;
 
-      // ================================
+      // ================================
 // Kamera sebagai "Player" (POV manusia)
 // ================================
 const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(-15, 4, 0), scene);
-    camera.attachControl(canvas, true);
-    camera.applyGravity = true;
-    camera.ellipsoid = new BABYLON.Vector3(0.5, 2, 0.5);
-    camera.checkCollisions = true;
-    camera.speed = 0.2;
-    camera.keysUp.push(87); camera.keysDown.push(83); camera.keysLeft.push(65); camera.keysRight.push(68); 
+    camera.attachControl(canvas, true);
+    camera.applyGravity = true;
+    camera.ellipsoid = new BABYLON.Vector3(0.5, 2, 0.5);
+    camera.checkCollisions = true;
+    camera.speed = 0.2;
+    camera.keysUp.push(87); camera.keysDown.push(83); camera.keysLeft.push(65); camera.keysRight.push(68); 
 
-    let xr = null;
+    let xr = null;
 
-      // ================================
+      // ================================
 // Tambahkan Model + Collision
 // ================================
 BABYLON.SceneLoader.Append("assets/", "ruang_periksa.glb", scene, function () {
-  console.log("✅ Model dimuat!");
+  console.log("✅ Model dimuat!");
 
-  
-  // Tunggu sampai model selesai dimuat sepenuhnya
-  scene.executeWhenReady(() => {
-    // Loop semua mesh di scene
-    scene.meshes.forEach(mesh => {
-      // Abaikan ground, kamera, dan helper mesh
-      if (mesh.name !== "ground" && mesh.name !== "playerCam" && mesh.name !== "__root__") {
-        mesh.checkCollisions = true; // Aktifkan collision
-        mesh.isPickable = true;      // Boleh diklik (optional)
-      }
-    });
-    console.log("🧱 Collision diaktifkan untuk semua mesh model ruang_periksa.glb");
-  });
+  
+  // Tunggu sampai model selesai dimuat sepenuhnya
+  scene.executeWhenReady(() => {
+    // Loop semua mesh di scene
+    scene.meshes.forEach(mesh => {
+      // Abaikan ground, kamera, dan helper mesh
+      if (mesh.name !== "ground" && mesh.name !== "playerCam" && mesh.name !== "__root__") {
+        mesh.checkCollisions = true; // Aktifkan collision
+        mesh.isPickable = true;      // Boleh diklik (optional)
+      }
+    });
+    console.log("🧱 Collision diaktifkan untuk semua mesh model ruang_periksa.glb");
+  });
 });
 
 
-      // ================================
-      // Aktifkan VR / XR Mode
-      // ================================
+      // ================================
+      // Aktifkan VR / XR Mode
+      // ================================
 try {
-        xr = await scene.createDefaultXRExperienceAsync({
-          floorMeshes: [ground],
-          disableTeleportation: true,
-          cameraOptions:{
-            checkCollisions: true,
-            applyGravity: true,
-            ellipsoid: new BABYLON.Vector3(0.5, 2, 0.5)
-          }
-        });
-        console.log("✅ WebXR aktif");
-        const xrCamera = xr.baseExperience.camera;
-        xrCamera.applyGravity = true;
-        xrCamera.checkCollisions = true;
+        xr = await scene.createDefaultXRExperienceAsync({
+          floorMeshes: [ground],
+          disableTeleportation: true,
+          cameraOptions:{
+            checkCollisions: true,
+            applyGravity: true,
+            // ELLIPSOID Y diatur ke 2 (tinggi badan)
+            ellipsoid: new BABYLON.Vector3(0.5, 2, 0.5)
+          }
+        });
+        console.log("✅ WebXR aktif");
+        
+        const xrCamera = xr.baseExperience.camera;
+        xrCamera.applyGravity = true;
+        xrCamera.checkCollisions = true;
 
-        const movementFeature = xr.baseExperience.featuresManager.enableFeature(
+        const movementFeature = xr.baseExperience.featuresManager.enableFeature(
           BABYLON.WebXRFeatureName.MOVEMENT,
           "latest",
           {
@@ -128,119 +128,126 @@ try {
             disableTeleportOnThumbstick: true,
             checkCollisions: true,
             applyGravity: true,
-            // Pastikan ellipsoid Y diatur ke tinggi yang wajar, misalnya 2
-            ellipsoid: new BABYLON.Vector3(0.5, 2, 0.5) 
+            // ELLIPSOID Y diatur ke 2 (tinggi badan)
+            ellipsoid: new BABYLON.Vector3(0.5, 2, 0.5)
           }
         );
-
-        // 2. Terapkan posisi awal segera setelah feature Movement diaktifkan
-        // Angka 2 di sini adalah ketinggian tambahan yang diinginkan
-        xrCamera.position.y = 4; 
-
-        // 3. Tambahkan listener agar posisi dipertahankan saat memasuki/keluar XR
-        xr.baseExperience.onStateChangedObservable.add((state) => {
-            if (state === BABYLON.WebXRState.IN_XR) {
-                // Atur posisi awal saat masuk VR, Y=2 adalah ketinggian yang diinginkan
-                xrCamera.position.y = 4; 
-            }
-        });
-      } catch (e) {
-        console.warn("⚠️ WebXR tidak didukung, pakai mode biasa:", e);
-        scene.activeCamera = camera;
-        camera.applyGravity = true;
-        camera.checkCollisions = true;
-        
+      
+      
+      } catch (e) {
+        console.warn("⚠️ WebXR tidak didukung, pakai mode biasa:", e);
+        scene.activeCamera = camera;
+        camera.applyGravity = true;
+        camera.checkCollisions = true;
+        
+      }
+      
+      // === KODE UNTUK MEMAKSA KETINGGIAN AWAL (SOLUSI TERAKHIR) ===
+      if (xr) {
+          // Menggunakan ENTERING_XR untuk menyesuaikan posisi sebelum sistem XR menetapkannya
+          xr.baseExperience.onStateChangedObservable.add((state) => {
+              if (state === BABYLON.WebXRState.ENTERING_XR) {
+                  const xrCamera = xr.baseExperience.camera;
+                  // Atur posisi Y ke ketinggian awal yang diinginkan (4 meter)
+                  xrCamera.position.y = 4; 
+                  // Opsional: Atur posisi X dan Z agar sama dengan kamera non-VR
+                  xrCamera.position.x = -15;
+                  xrCamera.position.z = 0;
+                  console.log("🔥 Ketinggian kamera XR dipaksa menjadi 4m!");
+              }
+          });
       }
-      console.log("WebXR state: ", xr.baseExperience.state);
-        console.log("Current Camera: ", scene.activeCamera);
-    
+      
+      console.log("WebXR state: ", xr.baseExperience.state);
+        console.log("Current Camera: ", scene.activeCamera);
+    
 
 // ================================
 // Muat GLB dengan physics
 // ================================
 BABYLON.SceneLoader.ImportMesh("", "assets/", "perban.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-19, 2.5, 0.5);
-  rootMesh.scaling = new BABYLON.Vector3(0.03, 0.03, 0.03);
- });
+  const rootMesh = meshes[0]; // ambil mesh utama
+  rootMesh.position = new BABYLON.Vector3(-19, 2.5, 0.5);
+  rootMesh.scaling = new BABYLON.Vector3(0.03, 0.03, 0.03);
+ });
 
 
 BABYLON.SceneLoader.ImportMesh("", "assets/", "oximeter.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-11, 2.6, 0.5);
-  rootMesh.scaling = new BABYLON.Vector3(0.13, 0.13, 0.13);
+  const rootMesh = meshes[0]; // ambil mesh utama
+  rootMesh.position = new BABYLON.Vector3(-11, 2.6, 0.5);
+  rootMesh.scaling = new BABYLON.Vector3(0.13, 0.13, 0.13);
 });
 
 BABYLON.SceneLoader.ImportMesh("", "assets/", "gunting medis.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-11, 2.55, -3.5);
-  rootMesh.scaling = new BABYLON.Vector3(0.035, 0.035, 0.035);
+  const rootMesh = meshes[0]; // ambil mesh utama
+  rootMesh.position = new BABYLON.Vector3(-11, 2.55, -3.5);
+  rootMesh.scaling = new BABYLON.Vector3(0.035, 0.035, 0.035);
 });
 
 BABYLON.SceneLoader.ImportMesh("", "assets/", "reflex hammer.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-11, 2.6, -7.5);
-  rootMesh.scaling = new BABYLON.Vector3(3, 3, 3);
+  const rootMesh = meshes[0]; // ambil mesh utama
+  rootMesh.position = new BABYLON.Vector3(-11, 2.6, -7.5);
+  rootMesh.scaling = new BABYLON.Vector3(3, 3, 3);
 });
 
 BABYLON.SceneLoader.ImportMesh("", "assets/", "stethoscope.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-11, 2.6, -11.5);
-  rootMesh.scaling = new BABYLON.Vector3(0.002, 0.002, 0.002);
+  const rootMesh = meshes[0]; // ambil mesh utama
+  rootMesh.position = new BABYLON.Vector3(-11, 2.6, -11.5);
+  rootMesh.scaling = new BABYLON.Vector3(0.002, 0.002, 0.002);
 });
 
 BABYLON.SceneLoader.ImportMesh("", "assets/", "TIANG INFUS.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-7.5, 0.2, -18.5);
-  rootMesh.scaling = new BABYLON.Vector3(0.07, 0.07, 0.07);
+  const rootMesh = meshes[0]; // ambil mesh utama
+  rootMesh.position = new BABYLON.Vector3(-7.5, 0.2, -18.5);
+  rootMesh.scaling = new BABYLON.Vector3(0.07, 0.07, 0.07);
 });
 
 BABYLON.SceneLoader.ImportMesh("", "assets/", "TIANG INFUS.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-7.5, 0.2, -18.5);
-  rootMesh.scaling = new BABYLON.Vector3(0.07, 0.07, 0.07);
+  const rootMesh = meshes[0]; // ambil mesh utama
+  rootMesh.position = new BABYLON.Vector3(-7.5, 0.2, -18.5);
+  rootMesh.scaling = new BABYLON.Vector3(0.07, 0.07, 0.07);
 });
 
 BABYLON.SceneLoader.ImportMesh("", "assets/", "kasa.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-19, 2.6, -3.5);
-  rootMesh.scaling = new BABYLON.Vector3(5, 5, 5);
+  const rootMesh = meshes[0]; // ambil mesh utama
+  rootMesh.position = new BABYLON.Vector3(-19, 2.6, -3.5);
+  rootMesh.scaling = new BABYLON.Vector3(5, 5, 5);
 });
 
 BABYLON.SceneLoader.ImportMesh("", "assets/", "suntik.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-19, 2.3, -7.5);
-  rootMesh.scaling = new BABYLON.Vector3(0.002, 0.002, 0.002);
+  const rootMesh = meshes[0]; // ambil mesh utama
+  rootMesh.position = new BABYLON.Vector3(-19, 2.3, -7.5);
+  rootMesh.scaling = new BABYLON.Vector3(0.002, 0.002, 0.002);
 });
 
 BABYLON.SceneLoader.ImportMesh("", "assets/", "thermometer.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-19, 2.6, -11.5);
-  rootMesh.scaling = new BABYLON.Vector3(0.3, 0.3, 0.3);
-  rootMesh.rotation = new BABYLON.Vector3(80, 160, 0);
+  const rootMesh = meshes[0]; // ambil mesh utama
+  rootMesh.position = new BABYLON.Vector3(-19, 2.6, -11.5);
+  rootMesh.scaling = new BABYLON.Vector3(0.3, 0.3, 0.3);
+  rootMesh.rotation = new BABYLON.Vector3(80, 160, 0);
 });
 
 BABYLON.SceneLoader.ImportMesh("", "assets/", "tensimeter.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-19, 2.6, -15.5);
-  rootMesh.scaling = new BABYLON.Vector3(0.3, 0.3, 0.3);
-  rootMesh.rotation = new BABYLON.Vector3(80, 160, 0);
-  
+  const rootMesh = meshes[0]; // ambil mesh utama
+  rootMesh.position = new BABYLON.Vector3(-19, 2.6, -15.5);
+  rootMesh.scaling = new BABYLON.Vector3(0.3, 0.3, 0.3);
+  rootMesh.rotation = new BABYLON.Vector3(80, 160, 0);
+  
 });
 
-      return scene;
-    };
+      return scene;
+    };
 
-    
-    // ================================
-    // Jalankan Scene
-    // ================================
-    createScene().then(scene => {
-      engine.runRenderLoop(() => scene.render());
-    });
+    
+    // ================================
+    // Jalankan Scene
+    // ================================
+    createScene().then(scene => {
+      engine.runRenderLoop(() => scene.render());
+    });
 
-    // Resize otomatis saat jendela berubah
-    window.addEventListener("resize", () => engine.resize());
-  </script>
+    // Resize otomatis saat jendela berubah
+    window.addEventListener("resize", () => engine.resize());
+  </script>
 </body>
 </html>
