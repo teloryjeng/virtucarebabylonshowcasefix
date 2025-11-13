@@ -107,12 +107,12 @@ try {
           cameraOptions:{
             checkCollisions: true,
             applyGravity: true,
-            ellipsoid: new BABYLON.Vector3(0.5, 2, 0.5)
+            ellipsoid: new BABYLON.Vector3(0.5, 4, 0.5)
           }
         });
         console.log("✅ WebXR aktif");
         const xrCamera = xr.baseExperience.camera;
-        xrCamera.position.y = 4;
+        xrCamera.position.y = 6;
         xrCamera.applyGravity = true;
         xrCamera.checkCollisions = true;
 
@@ -129,7 +129,7 @@ try {
             disableTeleportOnThumbstick: true,
             checkCollisions: true,
             applyGravity: true,
-            ellipsoid: new BABYLON.Vector3(0.5, 2, 0.5)
+            ellipsoid: new BABYLON.Vector3(0.5, 4, 0.5)
           }
         );
       } catch (e) {
