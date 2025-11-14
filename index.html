@@ -344,28 +344,44 @@
       console.log("✅ Semua 10 item berhasil dimuat.");
 
       // 4. Buat Kanvas dan Panel UI (Shared)
-      const adt = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
-      if (xr) { // Memastikan XR/VR sudah berhasil diinisialisasi
-          adt.connectToVRObserver(xr.baseExperience.camera);
+      const infoPlane = BABYLON.MeshBuilder.CreatePlane("infoPlane", {width: 1, height: 0.6}, scene);
+      
+      // Posisikan 1.5 meter di depan kamera
+      infoPlane.position = new BABYLON.Vector3(0, 0, 1.5); 
+      infoPlane.isVisible = false; // Sembunyikan di awal
+
+      // Tautkan panel ke kamera (desktop DAN VR)
+      // Panel akan selalu mengikuti pandangan Anda
+      if (xr) {
+          infoPlane.parent = xr.baseExperience.camera;
+      } else {
+          infoPlane.parent = camera;
       }
-      // --- Buat Panel Informasi (Shared) ---
+      
+      // Selalu hadapkan ke kamera (jika kamera berputar, panel ikut)
+      infoPlane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+
+      // Buat tekstur GUI khusus untuk plane 3D ini
+      const adtPanel = BABYLON.GUI.AdvancedDynamicTexture.CreateForMesh(infoPlane);
+
+      // --- Buat Konten Panel (mirip seperti sebelumnya) ---
+      // Gunakan resolusi pixel agar tajam
       const infoPanel = new BABYLON.GUI.Rectangle("infoPanel");
-      infoPanel.width = "350px";
-      infoPanel.height = "220px";
-      infoPanel.cornerRadius = 20;
+      infoPanel.widthInPixels = 1000;
+      infoPanel.heightInPixels = 600;
+      infoPanel.cornerRadius = 50;
       infoPanel.color = "white";
-      infoPanel.thickness = 2;
+      infoPanel.thickness = 10;
       infoPanel.background = "rgba(0, 0, 0, 0.8)";
-      infoPanel.isVisible = false; // Sembunyikan di awal
-      adt.addControl(infoPanel);
+      adtPanel.addControl(infoPanel);
 
       // TextBlock untuk Judul
       const infoTitle = new BABYLON.GUI.TextBlock("infoTitle");
       infoTitle.text = "Judul Benda";
       infoTitle.color = "white";
-      infoTitle.fontSize = 20;
+      infoTitle.fontSize = 50; // Font lebih besar untuk VR
       infoTitle.fontWeight = "bold";
-      infoTitle.paddingTop = "10px";
+      infoTitle.paddingTopInPixels = 30;
       infoTitle.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
       infoPanel.addControl(infoTitle);
 
@@ -373,63 +389,87 @@
       const infoDesc = new BABYLON.GUI.TextBlock("infoDesc");
       infoDesc.text = "Ini adalah deskripsi default...";
       infoDesc.color = "white";
-      infoDesc.fontSize = 16;
+      infoDesc.fontSize = 40; // Font lebih besar
       infoDesc.textWrapping = true;
-      infoDesc.paddingTop = "50px";
-      infoDesc.paddingLeft = "15px";
-      infoDesc.paddingRight = "15px";
+      infoDesc.paddingTopInPixels = 150;
+      infoDesc.paddingLeftInPixels = 40;
+      infoDesc.paddingRightInPixels = 40;
       infoDesc.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
       infoPanel.addControl(infoDesc);
 
       // Tombol "Tutup" di dalam panel
       const closeButton = BABYLON.GUI.Button.CreateSimpleButton("closeBtn", "Tutup");
-      closeButton.width = "100px";
-      closeButton.height = "40px";
+      closeButton.widthInPixels = 300;
+      closeButton.heightInPixels = 100;
       closeButton.color = "white";
       closeButton.background = "grey";
+      closeButton.fontSize = 40;
       closeButton.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-      closeButton.paddingBottom = "10px";
+      closeButton.paddingBottomInPixels = 30;
       infoPanel.addControl(closeButton);
 
-      // Aksi untuk tombol "Tutup"
+      // Aksi untuk tombol "Tutup" (sekarang menyembunyikan plane 3D)
+      // 'onPointerClickObservable' tetap berfungsi untuk GUI pada mesh
       closeButton.onPointerClickObservable.add(() => {
-          infoPanel.isVisible = false;
+          infoPlane.isVisible = false;
       });
 
+      // ================================
       // 5. Fungsi Helper untuk Tampilkan Info
+      // ================================
       function showInfo(itemData) {
           // Perbarui teks di panel
           infoTitle.text = itemData.title;
           infoDesc.text = itemData.description;
           
-          // Tampilkan panel
-          infoPanel.isVisible = true;
+          // Tampilkan panel (plane 3D)
+          infoPlane.isVisible = true;
       }
 
-      // 6. Loop untuk Membuat Tombol Tautan
+      // ================================
+      // 6. Loop untuk Membuat Tombol Tautan 3D
+      // ================================
+      // (Fitur pointer selection sudah aktif otomatis oleh createDefaultXRExperience)
+
       itemDatabase.forEach(item => {
-          // 1. Dapatkan mesh dari scene berdasarkan NAMA UNIK (id)
+          // 1. Dapatkan mesh INDUK (wrapper/mesh non-fisika)
           const targetMesh = scene.getMeshByName(item.id);
 
-          // 2. Jika mesh ditemukan...
           if (targetMesh) {
-              // 3. Buat tombol UI kecil
-              const linkButton = BABYLON.GUI.Button.CreateSimpleButton(`btn_${item.id}`, "i");
-              linkButton.width = "30px";
-              linkButton.height = "30px";
-              linkButton.cornerRadius = 15;
-              linkButton.color = "white";
-              linkButton.thickness = 2;
-              linkButton.background = "blue";
-              linkButton.fontSize = 14;
-              adt.addControl(linkButton);
+              // 2. Buat Tombol "i" 3D (sebagai plane kecil)
+              // Ukuran 0.15 x 0.15 meter (sesuaikan jika perlu)
+              const buttonPlane = BABYLON.MeshBuilder.CreatePlane(`btn_plane_${item.id}`, {size: 0.15}, scene);
 
-              // 4. Tautkan tombol ke mesh
-              linkButton.linkWithMesh(targetMesh);
-              linkButton.linkOffsetY = "-50px"; // Sesuaikan offset jika perlu
+              // 3. Tautkan tombol ke 'targetMesh'
+              buttonPlane.parent = targetMesh;
 
-              // 5. Tambahkan aksi klik
-              linkButton.onPointerClickObservable.add(() => {
+              // 4. Posisikan di atas target mesh
+              // Dapatkan ukuran bounding box dari target
+              let boundingBox = targetMesh.getHierarchyBoundingVectors(true);
+              // Hitung posisi Y relatif dari pusat wrapper ke puncaknya
+              let relativeTopY = boundingBox.max.y - targetMesh.position.y;
+              
+              // Posisikan tombol 0.3 meter di atas titik tertinggi mesh
+              buttonPlane.position = new BABYLON.Vector3(0, relativeTopY + 0.3, 0);
+
+              // 5. Buat tombol "i" 3D
+              let adtButton = BABYLON.GUI.AdvancedDynamicTexture.CreateForMesh(buttonPlane);
+              let btn = BABYLON.GUI.Button.CreateSimpleButton(`btn_gui_${item.id}`, "i");
+              btn.widthInPixels = 800;
+              btn.heightInPixels = 800;
+              btn.cornerRadius = 500;
+              btn.color = "white";
+              btn.thickness = 8;
+              btn.background = "blue";
+              btn.fontSize = 400;
+              adtButton.addControl(btn);
+              
+              // 6. Buat tombol selalu menghadap kamera
+              buttonPlane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+
+              // 7. Tambahkan aksi klik
+              // Pointer VR akan otomatis mendeteksi 'onPointerClickObservable' pada GUI di mesh
+              btn.onPointerClickObservable.add(() => {
                   showInfo(item);
               });
           } else {
