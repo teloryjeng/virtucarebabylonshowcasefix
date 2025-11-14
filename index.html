@@ -353,13 +353,13 @@
       // Tautkan panel ke kamera (desktop DAN VR)
       // Panel akan selalu mengikuti pandangan Anda
       if (xr) {
-          infoPlane.parent = xr.baseExperience.camera;
+          infoPlane.parent = xr.input.xrCamera;
       } else {
           infoPlane.parent = camera;
       }
       
       // Selalu hadapkan ke kamera (jika kamera berputar, panel ikut)
-      infoPlane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+      //infoPlane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
 
       // Buat tekstur GUI khusus untuk plane 3D ini
       const adtPanel = BABYLON.GUI.AdvancedDynamicTexture.CreateForMesh(infoPlane);
