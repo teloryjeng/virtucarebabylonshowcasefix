@@ -135,8 +135,8 @@
       // === MULAI KODE BARU: PEMUATAN ITEM & UI ===
       // ================================================================
 
-      // 1. Database Item (DENGAN properti 'physicsBox' BARU)
-      // !!! ANDA MUNGKIN PERLU MENYESUAIKAN UKURAN 'physicsBox' INI !!!
+      // 1. Database Item (DENGAN 'visualOffset')
+      // !!! ANDA HARUS MENYESUAIKAN NILAI 'visualOffset.y' DI BAWAH INI !!!
       const itemDatabase = [
           {
               id: "meshPerban",
@@ -146,7 +146,8 @@
               pos: new BABYLON.Vector3(-17, 2, 7.8),
               scale: new BABYLON.Vector3(0.03, 0.03, 0.03),
               physics: { mass: 1, restitution: 0.4 },
-              physicsBox: { width: 0.4, height: 0.4, depth: 0.4 } // SESUAIKAN UKURAN INI
+              physicsBox: { width: 0.4, height: 0.4, depth: 0.4 },
+              visualOffset: { x: 0, y: -0.2, z: 0 } // y = -height / 2 (Sesuaikan!)
           },
           {
               id: "meshOximeter",
@@ -156,7 +157,8 @@
               pos: new BABYLON.Vector3(-17, 2, 9.7),
               scale: new BABYLON.Vector3(0.13, 0.13, 0.13),
               physics: { mass: 1, restitution: 0.4 },
-              physicsBox: { width: 0.3, height: 0.3, depth: 0.5 } // SESUAIKAN UKURAN INI
+              physicsBox: { width: 0.3, height: 0.3, depth: 0.5 },
+              visualOffset: { x: 0, y: -0.15, z: 0 } // y = -height / 2 (Sesuaikan!)
           },
           {
               id: "meshGunting",
@@ -166,7 +168,8 @@
               pos: new BABYLON.Vector3(-17, 2, 11.7),
               scale: new BABYLON.Vector3(0.015, 0.015, 0.015),
               physics: { mass: 1, restitution: 0.4 },
-              physicsBox: { width: 0.2, height: 0.1, depth: 0.5 } // SESUAIKAN UKURAN INI
+              physicsBox: { width: 0.2, height: 0.1, depth: 0.5 },
+              visualOffset: { x: 0, y: -0.05, z: 0 } // y = -height / 2 (Sesuaikan!)
           },
           {
               id: "meshReflexHammer",
@@ -176,7 +179,8 @@
               pos: new BABYLON.Vector3(-17, 2, 13.8),
               scale: new BABYLON.Vector3(3, 3, 3),
               physics: { mass: 1, restitution: 0.4 },
-              physicsBox: { width: 0.2, height: 0.1, depth: 0.6 } // SESUAIKAN UKURAN INI
+              physicsBox: { width: 0.2, height: 0.1, depth: 0.6 },
+              visualOffset: { x: 0, y: -0.05, z: 0 } // y = -height / 2 (Sesuaikan!)
           },
           {
               id: "meshStethoscope",
@@ -186,7 +190,8 @@
               pos: new BABYLON.Vector3(-17, 2, 15.6),
               scale: new BABYLON.Vector3(0.0015, 0.0015, 0.0015),
               physics: { mass: 1, restitution: 0.4 },
-              physicsBox: { width: 0.4, height: 0.3, depth: 0.4 } // SESUAIKAN UKURAN INI
+              physicsBox: { width: 0.4, height: 0.3, depth: 0.4 },
+              visualOffset: { x: 0, y: -0.15, z: 0 } // y = -height / 2 (Sesuaikan!)
           },
           {
               id: "meshKasa",
@@ -196,7 +201,8 @@
               pos: new BABYLON.Vector3(-13, 2, 7.8),
               scale: new BABYLON.Vector3(5, 5, 5),
               physics: { mass: 1, restitution: 0.4 },
-              physicsBox: { width: 0.4, height: 0.4, depth: 0.4 } // SESUAIKAN UKURAN INI
+              physicsBox: { width: 0.4, height: 0.4, depth: 0.4 },
+              visualOffset: { x: 0, y: -0.2, z: 0 } // y = -height / 2 (Sesuaikan!)
           },
           {
               id: "meshSuntik",
@@ -206,7 +212,8 @@
               pos: new BABYLON.Vector3(-13, 2, 9.9),
               scale: new BABYLON.Vector3(0.001, 0.001, 0.001),
               physics: { mass: 1, restitution: 0.4 },
-              physicsBox: { width: 0.1, height: 0.1, depth: 0.7 } // SESUAIKAN UKURAN INI
+              physicsBox: { width: 0.1, height: 0.1, depth: 0.7 },
+              visualOffset: { x: 0, y: -0.05, z: 0 } // y = -height / 2 (Sesuaikan!)
           },
           {
               id: "meshThermometer",
@@ -217,7 +224,8 @@
               scale: new BABYLON.Vector3(0.25, 0.25, 0.25),
               rotation: new BABYLON.Vector3(80, 160, 0),
               physics: { mass: 1, restitution: 0.4 },
-              physicsBox: { width: 0.1, height: 0.1, depth: 0.5 } // SESUAIKAN UKURAN INI
+              physicsBox: { width: 0.1, height: 0.1, depth: 0.5 },
+              visualOffset: { x: 0, y: -0.05, z: 0 } // y = -height / 2 (Sesuaikan!)
           },
           {
               id: "meshTensimeter",
@@ -228,7 +236,8 @@
               scale: new BABYLON.Vector3(0.3, 0.3, 0.3),
               rotation: new BABYLON.Vector3(80, 160, 0),
               physics: { mass: 1, restitution: 0.4 },
-              physicsBox: { width: 0.4, height: 0.3, depth: 0.4 } // SESUAIKAN UKURAN INI
+              physicsBox: { width: 0.4, height: 0.3, depth: 0.4 },
+              visualOffset: { x: 0, y: -0.15, z: 0 } // y = -height / 2 (Sesuaikan!)
           },
           {
               id: "meshTiangInfus",
@@ -237,14 +246,15 @@
               description: "Tiang untuk menggantung kantung infus.",
               pos: new BABYLON.Vector3(-11, 0.1, 5.4),
               scale: new BABYLON.Vector3(0.04, 0.04, 0.04),
-              physics: null, // Tidak ada fisika
-              physicsBox: null // Tidak perlu kotak
+              physics: null, 
+              physicsBox: null,
+              visualOffset: { x: 0, y: 0, z: 0 } // Tidak perlu offset
           }
       ];
 
-      // 2. Fungsi Helper untuk Memuat Model (SOLUSI WRAPPER)
+      // 2. Fungsi Helper untuk Memuat Model (PERBAIKAN ROTASI)
       async function loadItem(itemData) {
-          // Jika tidak ada data fisika, muat seperti biasa (misal: Tiang Infus)
+          // Jika tidak ada data fisika, muat seperti biasa
           if (!itemData.physics || !itemData.physicsBox) {
               try {
                   const result = await BABYLON.SceneLoader.ImportMeshAsync("", "assets/", itemData.file, scene);
@@ -268,24 +278,17 @@
 
           // --- Proses untuk Item DENGAN Fisika ---
 
-          // 1. Buat Kotak Fisika (Wrapper) yang tak terlihat
+          // 1. Buat Kotak Fisika (Wrapper)
           const physicsWrapper = BABYLON.MeshBuilder.CreateBox(`wrapper_${itemData.id}`, {
               width: itemData.physicsBox.width,
               height: itemData.physicsBox.height,
               depth: itemData.physicsBox.depth
           }, scene);
 
-          // 2. Atur posisi/rotasi Wrapper
+          // 2. Atur posisi Wrapper (TANPA ROTASI)
           physicsWrapper.position = itemData.pos;
-          if (itemData.rotation) {
-              physicsWrapper.rotation = new BABYLON.Vector3(
-                  BABYLON.Tools.ToRadians(itemData.rotation.x),
-                  BABYLON.Tools.ToRadians(itemData.rotation.y),
-                  BABYLON.Tools.ToRadians(itemData.rotation.z)
-              );
-          }
           
-          // (Opsional) Atur 'true' untuk debugging ukuran kotak
+          // Atur 'true' untuk melihat kotak fisika saat debugging
           physicsWrapper.isVisible = false; 
 
           // 3. Beri nama ID ke Wrapper (untuk UI link)
@@ -307,16 +310,30 @@
               // 6. Jadikan GLB sebagai anak dari Wrapper
               rootMesh.parent = physicsWrapper;
               
-              // 7. Atur posisi & skala GLB *RELATIF* terhadap wrapper
-              rootMesh.position = BABYLON.Vector3.Zero(0, -itemData.physicsBox.height / 2, 0);
+              // 7. Atur skala GLB
               rootMesh.scaling = itemData.scale;
-              // Rotasi GLB tidak perlu diatur, karena wrapper-nya sudah berotasi
+              
+              // 8. Atur posisi GLB *RELATIF* terhadap wrapper menggunakan offset manual
+              rootMesh.position = new BABYLON.Vector3(
+                  itemData.visualOffset.x,
+                  itemData.visualOffset.y,
+                  itemData.visualOffset.z
+              );
+
+              // 9. Terapkan rotasi ke model visual, BUKAN ke wrapper
+              if (itemData.rotation) {
+                  rootMesh.rotation = new BABYLON.Vector3(
+                      BABYLON.Tools.ToRadians(itemData.rotation.x),
+                      BABYLON.Tools.ToRadians(itemData.rotation.y),
+                      BABYLON.Tools.ToRadians(itemData.rotation.z)
+                  );
+              }
               
           } catch (e) {
               console.error(`Gagal memuat item (fisika) ${itemData.file}:`, e);
           }
 
-          // 8. Kembalikan Wrapper (sekarang ini adalah objek utamanya)
+          // 10. Kembalikan Wrapper
           return physicsWrapper;
       }
 
@@ -328,7 +345,9 @@
 
       // 4. Buat Kanvas dan Panel UI (Shared)
       const adt = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
-
+      if (xr) { // Memastikan XR/VR sudah berhasil diinisialisasi
+          adt.connectToVRObserver(xr.baseExperience.camera);
+      }
       // --- Buat Panel Informasi (Shared) ---
       const infoPanel = new BABYLON.GUI.Rectangle("infoPanel");
       infoPanel.width = "350px";
@@ -390,7 +409,6 @@
       // 6. Loop untuk Membuat Tombol Tautan
       itemDatabase.forEach(item => {
           // 1. Dapatkan mesh dari scene berdasarkan NAMA UNIK (id)
-          // (Ini sekarang merujuk ke 'physicsWrapper' atau 'rootMesh' non-fisika)
           const targetMesh = scene.getMeshByName(item.id);
 
           // 2. Jika mesh ditemukan...
@@ -425,7 +443,7 @@
 
 
       // === KODE COLLISION BOX ASLI ANDA (TETAP DISIMPAN) ===
-      const mejaCollision1= BABYLON.MeshBuilder.CreateBox("mejaCollision", {height: 1.65, width: 0.7, depth: 10}, scene);
+      const mejaCollision1= BABYLON.MeshBuilder.CreateBox("mejaCollision", {height: 1.6, width: 0.7, depth: 10}, scene);
       mejaCollision1.position = new BABYLON.Vector3(-17, 0.5, 12);
       mejaCollision1.isVisible = false;
       mejaCollision1.physicsImpostor = new BABYLON.PhysicsImpostor(
