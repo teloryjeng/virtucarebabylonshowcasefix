@@ -8,15 +8,12 @@
     #renderCanvas { width: 100%; height: 100%; touch-action: none; }
   </style>
 
-  <!-- Babylon.js Core + GLTF Loader + Physics Engine -->
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script src="https://cdn.babylonjs.com/loaders/babylon.glTF2FileLoader.min.js"></script>
   <script src="https://cdn.babylonjs.com/ammo.js"></script>
+  <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
 
-  <!-- file JS eksternal untuk fisika -->
   <script src="js/physics.js"></script>
-
-
 </head>
 <body>
   <canvas id="renderCanvas"></canvas>
@@ -63,37 +60,36 @@
       dirLight.intensity = 1;
 
       // ================================
-// Kamera sebagai "Player" (POV manusia)
-// ================================
-const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(-15, 2, 0), scene);
-    camera.attachControl(canvas, true);
-    camera.applyGravity = true;
-    camera.ellipsoid = new BABYLON.Vector3(0.5, 1, 0.5);
-    camera.checkCollisions = true;
-    camera.speed = 0.2;
-    camera.keysUp.push(87); camera.keysDown.push(83); camera.keysLeft.push(65); camera.keysRight.push(68); 
+      // Kamera sebagai "Player" (POV manusia)
+      // ================================
+      const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(-15, 2, 0), scene);
+      camera.attachControl(canvas, true);
+      camera.applyGravity = true;
+      camera.ellipsoid = new BABYLON.Vector3(0.5, 1, 0.5);
+      camera.checkCollisions = true;
+      camera.speed = 0.2;
+      camera.keysUp.push(87); camera.keysDown.push(83); camera.keysLeft.push(65); camera.keysRight.push(68); 
 
-    let xr = null;
+      let xr = null;
 
       // ================================
-// Tambahkan Model + Collision
-// ================================
-BABYLON.SceneLoader.ImportMeshAsync("", "assets/", "ruang_periksa.glb", scene 
-    ).then((result) => {
-        if (result.meshes.length > 0) {
-            result.meshes[0].position = new BABYLON.Vector3(-22.5, 0, 8);
-            result.meshes[0].scaling = new BABYLON.Vector3(-0.5, 0.5, 0.5);
-            result.meshes[0].getChildMeshes().forEach(mesh => { 
-                mesh.checkCollisions = true;
-             });
-        }
-    }).catch((error) => { console.error("Gagal memuat model:", error); });
-
+      // Tambahkan Model Ruangan + Collision
+      // ================================
+      BABYLON.SceneLoader.ImportMeshAsync("", "assets/", "ruang_periksa.glb", scene 
+      ).then((result) => {
+          if (result.meshes.length > 0) {
+              result.meshes[0].position = new BABYLON.Vector3(-22.5, 0, 8);
+              result.meshes[0].scaling = new BABYLON.Vector3(-0.5, 0.5, 0.5);
+              result.meshes[0].getChildMeshes().forEach(mesh => { 
+                  mesh.checkCollisions = true;
+                 });
+          }
+      }).catch((error) => { console.error("Gagal memuat model:", error); });
 
       // ================================
       // Aktifkan VR / XR Mode
       // ================================
-try {
+      try {
         xr = await scene.createDefaultXRExperienceAsync({
           floorMeshes: [ground],
           disableTeleportation: true,
@@ -130,161 +126,331 @@ try {
         scene.activeCamera = camera;
         camera.applyGravity = true;
         camera.checkCollisions = true;
-        
       }
       console.log("WebXR state: ", xr.baseExperience.state);
-        console.log("Current Camera: ", scene.activeCamera);
+      console.log("Current Camera: ", scene.activeCamera);
     
 
-// ================================
-// Muat GLB dengan physics
-// ================================
-BABYLON.SceneLoader.ImportMesh("", "assets/", "perban.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-17, 2, 7.8);
-  rootMesh.scaling = new BABYLON.Vector3(0.03, 0.03, 0.03);
-  rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        rootMesh,
-        BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 0, restitution: 0.4 }, 
-        scene
-    );
- });
+      // ================================================================
+      // === MULAI KODE BARU: PEMUATAN ITEM & UI ===
+      // ================================================================
+
+      // 1. Database Item (DENGAN properti 'physicsBox' BARU)
+      // !!! ANDA MUNGKIN PERLU MENYESUAIKAN UKURAN 'physicsBox' INI !!!
+      const itemDatabase = [
+          {
+              id: "meshPerban",
+              file: "perban.glb",
+              title: "Perban",
+              description: "Digunakan untuk membalut luka agar tetap bersih.",
+              pos: new BABYLON.Vector3(-17, 2, 7.8),
+              scale: new BABYLON.Vector3(0.03, 0.03, 0.03),
+              physics: { mass: 1, restitution: 0.4 },
+              physicsBox: { width: 0.4, height: 0.4, depth: 0.4 } // SESUAIKAN UKURAN INI
+          },
+          {
+              id: "meshOximeter",
+              file: "oximeter.glb",
+              title: "Pulse Oximeter",
+              description: "Alat untuk mengukur saturasi oksigen dalam darah (SpO2).",
+              pos: new BABYLON.Vector3(-17, 2, 9.7),
+              scale: new BABYLON.Vector3(0.13, 0.13, 0.13),
+              physics: { mass: 1, restitution: 0.4 },
+              physicsBox: { width: 0.3, height: 0.3, depth: 0.5 } // SESUAIKAN UKURAN INI
+          },
+          {
+              id: "meshGunting",
+              file: "gunting medis.glb",
+              title: "Gunting Medis",
+              description: "Gunting steril untuk keperluan medis.",
+              pos: new BABYLON.Vector3(-17, 2, 11.7),
+              scale: new BABYLON.Vector3(0.015, 0.015, 0.015),
+              physics: { mass: 1, restitution: 0.4 },
+              physicsBox: { width: 0.2, height: 0.1, depth: 0.5 } // SESUAIKAN UKURAN INI
+          },
+          {
+              id: "meshReflexHammer",
+              file: "reflex hammer.glb",
+              title: "Reflex Hammer",
+              description: "Palu untuk menguji refleks tendon.",
+              pos: new BABYLON.Vector3(-17, 2, 13.8),
+              scale: new BABYLON.Vector3(3, 3, 3),
+              physics: { mass: 1, restitution: 0.4 },
+              physicsBox: { width: 0.2, height: 0.1, depth: 0.6 } // SESUAIKAN UKURAN INI
+          },
+          {
+              id: "meshStethoscope",
+              file: "stethoscope.glb",
+              title: "Stetoskop",
+              description: "Alat untuk mendengarkan suara internal tubuh.",
+              pos: new BABYLON.Vector3(-17, 2, 15.6),
+              scale: new BABYLON.Vector3(0.0015, 0.0015, 0.0015),
+              physics: { mass: 1, restitution: 0.4 },
+              physicsBox: { width: 0.4, height: 0.3, depth: 0.4 } // SESUAIKAN UKURAN INI
+          },
+          {
+              id: "meshKasa",
+              file: "kasa.glb",
+              title: "Kain Kasa",
+              description: "Kain steril untuk membersihkan atau menutup luka.",
+              pos: new BABYLON.Vector3(-13, 2, 7.8),
+              scale: new BABYLON.Vector3(5, 5, 5),
+              physics: { mass: 1, restitution: 0.4 },
+              physicsBox: { width: 0.4, height: 0.4, depth: 0.4 } // SESUAIKAN UKURAN INI
+          },
+          {
+              id: "meshSuntik",
+              file: "suntik.glb",
+              title: "Alat Suntik (Syringe)",
+              description: "Digunakan untuk menyuntikkan cairan ke dalam tubuh.",
+              pos: new BABYLON.Vector3(-13, 2, 9.9),
+              scale: new BABYLON.Vector3(0.001, 0.001, 0.001),
+              physics: { mass: 1, restitution: 0.4 },
+              physicsBox: { width: 0.1, height: 0.1, depth: 0.7 } // SESUAIKAN UKURAN INI
+          },
+          {
+              id: "meshThermometer",
+              file: "thermometer.glb",
+              title: "Termometer",
+              description: "Alat pengukur suhu tubuh.",
+              pos: new BABYLON.Vector3(-13, 2, 11.7),
+              scale: new BABYLON.Vector3(0.25, 0.25, 0.25),
+              rotation: new BABYLON.Vector3(80, 160, 0),
+              physics: { mass: 1, restitution: 0.4 },
+              physicsBox: { width: 0.1, height: 0.1, depth: 0.5 } // SESUAIKAN UKURAN INI
+          },
+          {
+              id: "meshTensimeter",
+              file: "tensimeter.glb",
+              title: "Tensimeter",
+              description: "Alat pengukur tekanan darah.",
+              pos: new BABYLON.Vector3(-13, 2, 13.8),
+              scale: new BABYLON.Vector3(0.3, 0.3, 0.3),
+              rotation: new BABYLON.Vector3(80, 160, 0),
+              physics: { mass: 1, restitution: 0.4 },
+              physicsBox: { width: 0.4, height: 0.3, depth: 0.4 } // SESUAIKAN UKURAN INI
+          },
+          {
+              id: "meshTiangInfus",
+              file: "TIANG INFUS.glb",
+              title: "Tiang Infus",
+              description: "Tiang untuk menggantung kantung infus.",
+              pos: new BABYLON.Vector3(-11, 0.1, 5.4),
+              scale: new BABYLON.Vector3(0.04, 0.04, 0.04),
+              physics: null, // Tidak ada fisika
+              physicsBox: null // Tidak perlu kotak
+          }
+      ];
+
+      // 2. Fungsi Helper untuk Memuat Model (SOLUSI WRAPPER)
+      async function loadItem(itemData) {
+          // Jika tidak ada data fisika, muat seperti biasa (misal: Tiang Infus)
+          if (!itemData.physics || !itemData.physicsBox) {
+              try {
+                  const result = await BABYLON.SceneLoader.ImportMeshAsync("", "assets/", itemData.file, scene);
+                  const rootMesh = result.meshes[0];
+                  rootMesh.name = itemData.id;
+                  rootMesh.position = itemData.pos;
+                  rootMesh.scaling = itemData.scale;
+                  if (itemData.rotation) {
+                      rootMesh.rotation = new BABYLON.Vector3(
+                          BABYLON.Tools.ToRadians(itemData.rotation.x),
+                          BABYLON.Tools.ToRadians(itemData.rotation.y),
+                          BABYLON.Tools.ToRadians(itemData.rotation.z)
+                      );
+                  }
+                  return rootMesh;
+              } catch (e) {
+                  console.error(`Gagal memuat item (non-fisika) ${itemData.file}:`, e);
+                  return null;
+              }
+          }
+
+          // --- Proses untuk Item DENGAN Fisika ---
+
+          // 1. Buat Kotak Fisika (Wrapper) yang tak terlihat
+          const physicsWrapper = BABYLON.MeshBuilder.CreateBox(`wrapper_${itemData.id}`, {
+              width: itemData.physicsBox.width,
+              height: itemData.physicsBox.height,
+              depth: itemData.physicsBox.depth
+          }, scene);
+
+          // 2. Atur posisi/rotasi Wrapper
+          physicsWrapper.position = itemData.pos;
+          if (itemData.rotation) {
+              physicsWrapper.rotation = new BABYLON.Vector3(
+                  BABYLON.Tools.ToRadians(itemData.rotation.x),
+                  BABYLON.Tools.ToRadians(itemData.rotation.y),
+                  BABYLON.Tools.ToRadians(itemData.rotation.z)
+              );
+          }
+          
+          // (Opsional) Atur 'true' untuk debugging ukuran kotak
+          physicsWrapper.isVisible = false; 
+
+          // 3. Beri nama ID ke Wrapper (untuk UI link)
+          physicsWrapper.name = itemData.id;
+
+          // 4. Terapkan Fisika ke Wrapper
+          physicsWrapper.physicsImpostor = new BABYLON.PhysicsImpostor(
+              physicsWrapper,
+              BABYLON.PhysicsImpostor.BoxImpostor, 
+              itemData.physics, 
+              scene
+          );
+
+          // 5. Muat Model GLB
+          try {
+              const result = await BABYLON.SceneLoader.ImportMeshAsync("", "assets/", itemData.file, scene);
+              const rootMesh = result.meshes[0];
+
+              // 6. Jadikan GLB sebagai anak dari Wrapper
+              rootMesh.parent = physicsWrapper;
+              
+              // 7. Atur posisi & skala GLB *RELATIF* terhadap wrapper
+              rootMesh.position = BABYLON.Vector3.Zero(0, -itemData.physicsBox.height / 2, 0);
+              rootMesh.scaling = itemData.scale;
+              // Rotasi GLB tidak perlu diatur, karena wrapper-nya sudah berotasi
+              
+          } catch (e) {
+              console.error(`Gagal memuat item (fisika) ${itemData.file}:`, e);
+          }
+
+          // 8. Kembalikan Wrapper (sekarang ini adalah objek utamanya)
+          return physicsWrapper;
+      }
+
+      // 3. Jalankan Pemuatan (await)
+      console.log("Memulai memuat semua item...");
+      const loadPromises = itemDatabase.map(item => loadItem(item));
+      await Promise.all(loadPromises);
+      console.log("✅ Semua 10 item berhasil dimuat.");
+
+      // 4. Buat Kanvas dan Panel UI (Shared)
+      const adt = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
+      // --- Buat Panel Informasi (Shared) ---
+      const infoPanel = new BABYLON.GUI.Rectangle("infoPanel");
+      infoPanel.width = "350px";
+      infoPanel.height = "220px";
+      infoPanel.cornerRadius = 20;
+      infoPanel.color = "white";
+      infoPanel.thickness = 2;
+      infoPanel.background = "rgba(0, 0, 0, 0.8)";
+      infoPanel.isVisible = false; // Sembunyikan di awal
+      adt.addControl(infoPanel);
+
+      // TextBlock untuk Judul
+      const infoTitle = new BABYLON.GUI.TextBlock("infoTitle");
+      infoTitle.text = "Judul Benda";
+      infoTitle.color = "white";
+      infoTitle.fontSize = 20;
+      infoTitle.fontWeight = "bold";
+      infoTitle.paddingTop = "10px";
+      infoTitle.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      infoPanel.addControl(infoTitle);
+
+      // TextBlock untuk Deskripsi
+      const infoDesc = new BABYLON.GUI.TextBlock("infoDesc");
+      infoDesc.text = "Ini adalah deskripsi default...";
+      infoDesc.color = "white";
+      infoDesc.fontSize = 16;
+      infoDesc.textWrapping = true;
+      infoDesc.paddingTop = "50px";
+      infoDesc.paddingLeft = "15px";
+      infoDesc.paddingRight = "15px";
+      infoDesc.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+      infoPanel.addControl(infoDesc);
+
+      // Tombol "Tutup" di dalam panel
+      const closeButton = BABYLON.GUI.Button.CreateSimpleButton("closeBtn", "Tutup");
+      closeButton.width = "100px";
+      closeButton.height = "40px";
+      closeButton.color = "white";
+      closeButton.background = "grey";
+      closeButton.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+      closeButton.paddingBottom = "10px";
+      infoPanel.addControl(closeButton);
+
+      // Aksi untuk tombol "Tutup"
+      closeButton.onPointerClickObservable.add(() => {
+          infoPanel.isVisible = false;
+      });
+
+      // 5. Fungsi Helper untuk Tampilkan Info
+      function showInfo(itemData) {
+          // Perbarui teks di panel
+          infoTitle.text = itemData.title;
+          infoDesc.text = itemData.description;
+          
+          // Tampilkan panel
+          infoPanel.isVisible = true;
+      }
+
+      // 6. Loop untuk Membuat Tombol Tautan
+      itemDatabase.forEach(item => {
+          // 1. Dapatkan mesh dari scene berdasarkan NAMA UNIK (id)
+          // (Ini sekarang merujuk ke 'physicsWrapper' atau 'rootMesh' non-fisika)
+          const targetMesh = scene.getMeshByName(item.id);
+
+          // 2. Jika mesh ditemukan...
+          if (targetMesh) {
+              // 3. Buat tombol UI kecil
+              const linkButton = BABYLON.GUI.Button.CreateSimpleButton(`btn_${item.id}`, "i");
+              linkButton.width = "30px";
+              linkButton.height = "30px";
+              linkButton.cornerRadius = 15;
+              linkButton.color = "white";
+              linkButton.thickness = 2;
+              linkButton.background = "blue";
+              linkButton.fontSize = 14;
+              adt.addControl(linkButton);
+
+              // 4. Tautkan tombol ke mesh
+              linkButton.linkWithMesh(targetMesh);
+              linkButton.linkOffsetY = "-50px"; // Sesuaikan offset jika perlu
+
+              // 5. Tambahkan aksi klik
+              linkButton.onPointerClickObservable.add(() => {
+                  showInfo(item);
+              });
+          } else {
+              console.warn(`Mesh UI untuk "${item.id}" tidak ditemukan.`);
+          }
+      });
+
+      // ================================================================
+      // === AKHIR KODE BARU ===
+      // ================================================================
 
 
-BABYLON.SceneLoader.ImportMesh("", "assets/", "oximeter.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-17, 2, 9.7);
-  rootMesh.scaling = new BABYLON.Vector3(0.13, 0.13, 0.13);
-  rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        rootMesh,
-        BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 0, restitution: 0.4 }, 
-        scene
-    );
-});
+      // === KODE COLLISION BOX ASLI ANDA (TETAP DISIMPAN) ===
+      const mejaCollision1= BABYLON.MeshBuilder.CreateBox("mejaCollision", {height: 1.65, width: 0.7, depth: 10}, scene);
+      mejaCollision1.position = new BABYLON.Vector3(-17, 0.5, 12);
+      mejaCollision1.isVisible = false;
+      mejaCollision1.physicsImpostor = new BABYLON.PhysicsImpostor(
+          mejaCollision1,
+          BABYLON.PhysicsImpostor.BoxImpostor, 
+          { mass: 0, restitution: 0.2 }, 
+          scene
+      );
+      const mejaCollision2= BABYLON.MeshBuilder.CreateBox("mejaCollision", {height: 1.6, width: 0.7, depth: 10}, scene);
+      mejaCollision2.position = new BABYLON.Vector3(-13, 0.5, 12);
+      mejaCollision2.isVisible = false;
+      mejaCollision2.physicsImpostor = new BABYLON.PhysicsImpostor(
+          mejaCollision2,
+          BABYLON.PhysicsImpostor.BoxImpostor, 
+          { mass: 0, restitution: 0.2 }, 
+          scene
+      );
+      const infuscollision= BABYLON.MeshBuilder.CreateBox("infuscollision", {height: 5, width: 1.4, depth: 1}, scene);
+      infuscollision.position = new BABYLON.Vector3(-13.1, 0, 5.5);
+      infuscollision.isVisible = false;
+      infuscollision.checkCollisions = true;
 
-BABYLON.SceneLoader.ImportMesh("", "assets/", "gunting medis.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-17, 2, 11.7);
-  rootMesh.scaling = new BABYLON.Vector3(0.015, 0.015, 0.015);
-  rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        rootMesh,
-        BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 0, restitution: 0.4 }, 
-        scene
-    );
-});
 
-BABYLON.SceneLoader.ImportMesh("", "assets/", "reflex hammer.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-13, 2, -5.6);
-  rootMesh.scaling = new BABYLON.Vector3(3, 3, 3);
-  rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        rootMesh,
-        BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 0, restitution: 0.4 }, 
-        scene
-    );
-});
-
-BABYLON.SceneLoader.ImportMesh("", "assets/", "stethoscope.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-13, 2, -7.8);
-  rootMesh.scaling = new BABYLON.Vector3(0.0015, 0.0015, 0.0015);
-  rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        rootMesh,
-        BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 0, restitution: 0.4 }, 
-        scene
-    );
-});
-
-BABYLON.SceneLoader.ImportMesh("", "assets/", "TIANG INFUS.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-11, 0.1, -9.3);
-  rootMesh.scaling = new BABYLON.Vector3(0.04, 0.04, 0.04);
-  rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        rootMesh,
-        BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 0, restitution: 0.4 }, 
-        scene
-    );
-});
-
-BABYLON.SceneLoader.ImportMesh("", "assets/", "kasa.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-17, 2, 0.2);
-  rootMesh.scaling = new BABYLON.Vector3(5, 5, 5);
-  rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        rootMesh,
-        BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 0, restitution: 0.4 }, 
-        scene
-    );
-});
-
-BABYLON.SceneLoader.ImportMesh("", "assets/", "suntik.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-17, 2, -1.67);
-  rootMesh.scaling = new BABYLON.Vector3(0.001, 0.001, 0.001);
-  rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        rootMesh,
-        BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 0, restitution: 0.4 }, 
-        scene
-    );
-});
-
-BABYLON.SceneLoader.ImportMesh("", "assets/", "thermometer.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-17, 2, -3.8);
-  rootMesh.scaling = new BABYLON.Vector3(0.25, 0.25, 0.25);
-  rootMesh.rotation = new BABYLON.Vector3(80, 160, 0);
-  rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        rootMesh,
-        BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 0, restitution: 0.4 }, 
-        scene
-    );
-  rootMesh.applyGravity = true;
-});
-
-BABYLON.SceneLoader.ImportMesh("", "assets/", "tensimeter.glb", scene, function (meshes) {
-  const rootMesh = meshes[0]; // ambil mesh utama
-  rootMesh.position = new BABYLON.Vector3(-17, 2, -5.7);
-  rootMesh.scaling = new BABYLON.Vector3(0.3, 0.3, 0.3);
-  rootMesh.rotation = new BABYLON.Vector3(80, 160, 0);
-  rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        rootMesh,
-        BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 0, restitution: 0.4 }, 
-        scene
-    );
-
-});
-const mejaCollision1= BABYLON.MeshBuilder.CreateBox("mejaCollision", {height: 1.6, width: 0.7, depth: 10}, scene);
-mejaCollision1.position = new BABYLON.Vector3(-17, 0.5, 12);
-mejaCollision1.isVisible = true;
-mejaCollision1.physicsImpostor = new BABYLON.PhysicsImpostor(
-    mejaCollision1,
-    BABYLON.PhysicsImpostor.BoxImpostor, 
-    { mass: 0, restitution: 0.2 }, 
-    scene
-);
-const mejaCollision2= BABYLON.MeshBuilder.CreateBox("mejaCollision", {height: 1.6, width: 0.7, depth: 10}, scene);
-mejaCollision2.position = new BABYLON.Vector3(-13, 0.5, 12);
-mejaCollision2.isVisible = true;
-mejaCollision2.physicsImpostor = new BABYLON.PhysicsImpostor(
-    mejaCollision2,
-    BABYLON.PhysicsImpostor.BoxImpostor, 
-    { mass: 0, restitution: 0.2 }, 
-    scene
-);
-
-return scene;
-    };
-
+      return scene;
+    }; // <-- Akhir dari createScene
     
     // ================================
     // Jalankan Scene
