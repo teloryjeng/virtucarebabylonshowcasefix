@@ -14,6 +14,7 @@
   <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
 
   <script src="js/physics.js"></script>
+  <script src="js/grab.js"></script>
 </head>
 <body>
   <canvas id="renderCanvas"></canvas>
@@ -130,7 +131,7 @@
       console.log("WebXR state: ", xr.baseExperience.state);
       console.log("Current Camera: ", scene.activeCamera);
     
-
+      
       // ================================================================
       // === MULAI KODE BARU: PEMUATAN ITEM & UI ===
       // ================================================================
@@ -234,7 +235,7 @@
               description: "Alat pengukur tekanan darah.",
               pos: new BABYLON.Vector3(-13, 2, 13.8),
               scale: new BABYLON.Vector3(0.3, 0.3, 0.3),
-              rotation: new BABYLON.Vector3(80, 160, 0),
+              rotation: new BABYLON.Vector3(-75, 0, -105),
               physics: { mass: 1, restitution: 0.4 },
               physicsBox: { width: 0.4, height: 0.3, depth: 0.4 },
               visualOffset: { x: 0, y: -0.15, z: 0 } // y = -height / 2 (Sesuaikan!)
@@ -254,12 +255,17 @@
 
       // 2. Fungsi Helper untuk Memuat Model (PERBAIKAN ROTASI)
       async function loadItem(itemData) {
+        const isGrabbable=itemData.id!=="meshTiangInfus";
           // Jika tidak ada data fisika, muat seperti biasa
           if (!itemData.physics || !itemData.physicsBox) {
               try {
                   const result = await BABYLON.SceneLoader.ImportMeshAsync("", "assets/", itemData.file, scene);
                   const rootMesh = result.meshes[0];
                   rootMesh.name = itemData.id;
+                  if (isGrabbable){
+                      rootMesh.isPickable=true;
+                      itemData= itemData;
+                  }
                   rootMesh.position = itemData.pos;
                   rootMesh.scaling = itemData.scale;
                   if (itemData.rotation) {
@@ -293,6 +299,14 @@
 
           // 3. Beri nama ID ke Wrapper (untuk UI link)
           physicsWrapper.name = itemData.id;
+
+          if (isGrabbable){
+              physicsWrapper.isPickable=true;
+              physicsWrapper.metadata={
+                isGrabbable:true,
+                itemData:itemData
+              };
+          }
 
           // 4. Terapkan Fisika ke Wrapper
           physicsWrapper.physicsImpostor = new BABYLON.PhysicsImpostor(
@@ -506,7 +520,7 @@
       infuscollision.isVisible = false;
       infuscollision.checkCollisions = true;
 
-
+      setupGrabLogic(scene, xr);
       return scene;
     }; // <-- Akhir dari createScene
     
