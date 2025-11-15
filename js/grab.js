@@ -16,6 +16,35 @@ function pickUpItem(pickedMesh) {
 }
 
 /**
+ * [BARU] Mencari mesh grabbable dengan 'metadata.isGrabbable' dengan
+ * mengecek mesh yang di-pick dan semua parent-nya.
+ * Juga menangani pengecekan GUI.
+ * * @param {BABYLON.AbstractMesh} startingMesh Mesh yang kena pick raycast
+ * @returns {BABYLON.AbstractMesh | null} Mesh yang grabbable, atau null
+ */
+function findGrabbableParent(startingMesh) {
+    let currentMesh = startingMesh;
+    while (currentMesh) {
+        
+        // 1. Cek GUI Dulu (Paling Prioritas untuk diabaikan)
+        const meshName = currentMesh.name;
+        if (meshName.startsWith("btn_plane_") || meshName === "infoPlane") {
+            return null; // Ini GUI, jangan di-grab
+        }
+
+        // 2. Cek Metadata Grabbable
+        if (currentMesh.metadata && currentMesh.metadata.isGrabbable) {
+            return currentMesh; // Ditemukan! Ini adalah mesh root yang grabbable
+        }
+
+        // 3. Pindah ke parent untuk cek di iterasi berikutnya
+        currentMesh = currentMesh.parent;
+    }
+    return null; // Tidak ditemukan mesh grabbable di hierarki
+}
+
+
+/**
  * Menyiapkan listener input khusus untuk VR (Controller).
  * @param {BABYLON.WebXRDefaultExperience} xr 
  * @param {BABYLON.Scene} scene
@@ -25,31 +54,24 @@ function setupVRInput(xr, scene) {
     xr.input.onControllerAddedObservable.add((controller) => {
         console.log("VR Controller ditambahkan:", controller.inputSource.handedness);
         
-        // Kita hanya peduli dengan controller KANAN
         controller.onMotionControllerInitObservable.add((motionController) => {
             
-            // Cek lagi di sini untuk memastikan semua sudah siap
             if (motionController) {
                 console.log("Motion Controller siap:", motionController.id, "Hand:", controller.inputSource.handedness);
 
-                // Kita hanya peduli dengan controller KANAN
                 if (controller.inputSource.handedness === 'right') {
                     
-                    // 'motionController' di sini sudah DIJAMIN ada
                     const triggerComponent = motionController.getComponent(BABYLON.WebXRControllerComponent.TRIGGER);
                     
                     if (triggerComponent) {
-                        // Saat tombol trigger berubah status (ditekan/dilepas)
                         triggerComponent.onButtonStateChangedObservable.add((component) => {
                             
-                            // Cek apakah tombol DITEKAN
                             if (component.pressed) {
                                 console.log("VR Trigger Kanan DITEKAN");
 
-                                // Lakukan Raycast manual dari ujung controller
                                 const ray = new BABYLON.Ray(
-                                    controller.pointer.position, // Posisi awal ray (ujung pointer)
-                                    controller.pointer.forward,  // Arah ray
+                                    controller.pointer.position,
+                                    controller.pointer.forward,
                                     2.0 // Jarak ray (2 meter)
                                 );
                                 
@@ -57,17 +79,16 @@ function setupVRInput(xr, scene) {
 
                                 // Cek apakah mengenai sesuatu
                                 if (pickResult.hit && pickResult.pickedMesh) {
-                                    const pickedMeshName = pickResult.pickedMesh.name;
                                     
-                                    // Abaikan jika kena GUI
-                                    if (pickedMeshName.startsWith("btn_plane_") || pickedMeshName === "infoPlane") {
-                                        console.log("VR Grab: Kena GUI, diabaikan.");
-                                        return;
+                                    // [PERBAIKAN] Gunakan fungsi helper untuk mencari parent
+                                    const grabbableMesh = findGrabbableParent(pickResult.pickedMesh);
+                                    
+                                    if (grabbableMesh) {
+                                        console.log("VR Grab: Kena item ->", grabbableMesh.name);
+                                        pickUpItem(grabbableMesh);
+                                    } else {
+                                        console.log("VR Grab: Kena mesh, tapi tidak grabbable:", pickResult.pickedMesh.name);
                                     }
-                                    
-                                    // Ambil item
-                                    console.log("VR Grab: Kena item ->", pickedMeshName);
-                                    pickUpItem(pickResult.pickedMesh);
                                 }
                             }
                         });
@@ -93,31 +114,30 @@ function setupGrabLogic(scene, xr) {
     // ===================================
     scene.onPointerObservable.add((pointerInfo) => {
         
-        // Hanya proses jika event dari MOUSE
         if (pointerInfo.event.pointerType !== 'mouse') {
             return;
         }
 
-        // Hanya deteksi saat tombol DITEKAN
         if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERDOWN) {
             
-            // Pastikan pickInfo ada dan mengenai sesuatu
             const pickResult = pointerInfo.pickInfo;
             if (!pickResult || !pickResult.hit || !pickResult.pickedMesh) {
-                return; // Tidak kena apa-apa, abaikan
-            }
-
-            // PERBAIKAN FREEZE (GUI)
-            const pickedMeshName = pickResult.pickedMesh.name;
-            if (pickedMeshName.startsWith("btn_plane_") || pickedMeshName === "infoPlane") {
-                console.log("Mouse: Kena GUI, diabaikan.");
-                return; // Ini adalah GUI, biarkan listener GUI yang menangani
+                return;
             }
 
             // --- LOGIKA NON-VR (DESKTOP) ---
             if (pointerInfo.event.button === 0) { // 0 = Klik Kiri
-                console.log("Mouse: Kena item ->", pickedMeshName);
-                pickUpItem(pickResult.pickedMesh);
+                
+                // [PERBAIKAN] Gunakan fungsi helper untuk mencari parent
+                // Pengecekan GUI sudah ditangani di dalam findGrabbableParent
+                const grabbableMesh = findGrabbableParent(pickResult.pickedMesh);
+                
+                if (grabbableMesh) {
+                    console.log("Mouse: Kena item ->", grabbableMesh.name);
+                    pickUpItem(grabbableMesh);
+                } else {
+                    console.log("Mouse: Kena mesh, tapi tidak grabbable/GUI:", pickResult.pickedMesh.name);
+                }
             }
         }
     });
