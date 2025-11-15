@@ -235,7 +235,7 @@
               description: "Alat pengukur tekanan darah.",
               pos: new BABYLON.Vector3(-13, 2, 13.8),
               scale: new BABYLON.Vector3(0.3, 0.3, 0.3),
-              rotation: new BABYLON.Vector3(-75, 0, -105),
+              rotation: new BABYLON.Vector3(-75, -35, -80),
               physics: { mass: 1, restitution: 0.4 },
               physicsBox: { width: 0.4, height: 0.3, depth: 0.4 },
               visualOffset: { x: 0, y: -0.15, z: 0 } // y = -height / 2 (Sesuaikan!)
@@ -263,7 +263,7 @@
                   const rootMesh = result.meshes[0];
                   rootMesh.name = itemData.id;
                   if (isGrabbable){
-                      rootMesh.isPickable=true;
+                      rootMesh.isGrabbable=true;
                       itemData= itemData;
                   }
                   rootMesh.position = itemData.pos;
