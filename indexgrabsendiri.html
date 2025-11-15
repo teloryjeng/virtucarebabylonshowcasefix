@@ -43,8 +43,6 @@
    const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 100, height: 100 }, scene);
    ground.checkCollisions = true;
    ground.position.y = 0;
-
-   // Tambahkan Physics Impostor agar terpengaruh fisika
    ground.physicsImpostor = new BABYLON.PhysicsImpostor(
     ground,
     BABYLON.PhysicsImpostor.BoxImpostor,
@@ -57,7 +55,6 @@
    // ================================
    const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
    light.intensity = 0.7;
-
    const dirLight = new BABYLON.DirectionalLight("dirLight", new BABYLON.Vector3(-1, -2, -1), scene);
    dirLight.intensity = 1;
 
@@ -139,11 +136,11 @@
     // Muat GLB dengan physics
     // ================================
     BABYLON.SceneLoader.ImportMesh("", "assets/", "perban.glb", scene, function (meshes) {
-     const rootMesh = meshes[0]; // ambil mesh utama
+     const rootMesh = meshes[0];
      rootMesh.position = new BABYLON.Vector3(-17, 2, 7.8);
      rootMesh.scaling = new BABYLON.Vector3(0.03, 0.03, 0.03);
       
-      // [PERBAIKAN] Atur 'isGrabbable' di dalam metadata
+      // [PERBAIKAN 1] Atur 'isGrabbable' di dalam metadata
       if (!rootMesh.metadata) { rootMesh.metadata = {}; }
       rootMesh.metadata.isGrabbable = true;
       rootMesh.metadata.itemData = { title: "Perban" };
@@ -151,18 +148,18 @@
      rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
         rootMesh,
         BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 1, restitution: 0.4 }, 
+        { mass: 0.01, restitution: 0.4 }, // [PERBAIKAN 2] Ubah mass dari 1 ke 0.01
         scene
       );
     });
 
 
     BABYLON.SceneLoader.ImportMesh("", "assets/", "oximeter.glb", scene, function (meshes) {
-     const rootMesh = meshes[0]; // ambil mesh utama
+     const rootMesh = meshes[0];
      rootMesh.position = new BABYLON.Vector3(-17, 2, 9.7);
      rootMesh.scaling = new BABYLON.Vector3(0.13, 0.13, 0.13);
 
-      // [PERBAIKAN] Atur 'isGrabbable' di dalam metadata
+      // [PERBAIKAN 1]
       if (!rootMesh.metadata) { rootMesh.metadata = {}; }
       rootMesh.metadata.isGrabbable = true;
       rootMesh.metadata.itemData = { title: "Oximeter" };
@@ -170,17 +167,17 @@
      rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
         rootMesh,
         BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 1, restitution: 0.4 }, 
+        { mass: 0.01, restitution: 0.4 }, // [PERBAIKAN 2]
         scene
       );
     });
 
     BABYLON.SceneLoader.ImportMesh("", "assets/", "gunting medis.glb", scene, function (meshes) {
-     const rootMesh = meshes[0]; // ambil mesh utama
+     const rootMesh = meshes[0];
      rootMesh.position = new BABYLON.Vector3(-17, 2, 11.7);
      rootMesh.scaling = new BABYLON.Vector3(0.015, 0.015, 0.015);
       
-      // [PERBAIKAN] Atur 'isGrabbable' di dalam metadata
+      // [PERBAIKAN 1]
       if (!rootMesh.metadata) { rootMesh.metadata = {}; }
       rootMesh.metadata.isGrabbable = true;
       rootMesh.metadata.itemData = { title: "Gunting Medis" };
@@ -188,17 +185,17 @@
      rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
         rootMesh,
         BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 1, restitution: 0.4 }, 
+        { mass: 0.01, restitution: 0.4 }, // [PERBAIKAN 2]
         scene
       );
     });
 
     BABYLON.SceneLoader.ImportMesh("", "assets/", "reflex hammer.glb", scene, function (meshes) {
-     const rootMesh = meshes[0]; // ambil mesh utama
+     const rootMesh = meshes[0];
      rootMesh.position = new BABYLON.Vector3(-17, 2, 13.8);
      rootMesh.scaling = new BABYLON.Vector3(3, 3, 3);
       
-      // [PERBAIKAN] Atur 'isGrabbable' di dalam metadata
+      // [PERBAIKAN 1]
       if (!rootMesh.metadata) { rootMesh.metadata = {}; }
       rootMesh.metadata.isGrabbable = true;
       rootMesh.metadata.itemData = { title: "Reflex Hammer" };
@@ -206,17 +203,17 @@
      rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
         rootMesh,
         BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 1, restitution: 0.4 }, 
+        { mass: 0.01, restitution: 0.4 }, // [PERBAIKAN 2]
         scene
       );
     });
 
     BABYLON.SceneLoader.ImportMesh("", "assets/", "stethoscope.glb", scene, function (meshes) {
-     const rootMesh = meshes[0]; // ambil mesh utama
+     const rootMesh = meshes[0];
      rootMesh.position = new BABYLON.Vector3(-17, 2, 15.6);
      rootMesh.scaling = new BABYLON.Vector3(0.0015, 0.0015, 0.0015);
       
-      // [PERBAIKAN] Atur 'isGrabbable' di dalam metadata
+      // [PERBAIKAN 1]
       if (!rootMesh.metadata) { rootMesh.metadata = {}; }
       rootMesh.metadata.isGrabbable = true;
       rootMesh.metadata.itemData = { title: "Stethoscope" };
@@ -224,16 +221,15 @@
      rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
         rootMesh,
         BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 1, restitution: 0.4 }, 
+        { mass: 0.01, restitution: 0.4 }, // [PERBAIKAN 2]
         scene
       );
     });
 
     BABYLON.SceneLoader.ImportMesh("", "assets/", "TIANG INFUS.glb", scene, function (meshes) {
-     const rootMesh = meshes[0]; // ambil mesh utama
+     const rootMesh = meshes[0];
      rootMesh.position = new BABYLON.Vector3(-11, 0.1, 5.4);
      rootMesh.scaling = new BABYLON.Vector3(0.04, 0.04, 0.04);
-      // Item ini tidak grabbable, jadi tidak perlu metadata
      rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
         rootMesh,
         BABYLON.PhysicsImpostor.BoxImpostor, 
@@ -243,11 +239,11 @@
     });
 
     BABYLON.SceneLoader.ImportMesh("", "assets/", "kasa.glb", scene, function (meshes) {
-     const rootMesh = meshes[0]; // ambil mesh utama
+     const rootMesh = meshes[0];
      rootMesh.position = new BABYLON.Vector3(-13, 2, 7.8);
      rootMesh.scaling = new BABYLON.Vector3(5, 5, 5);
       
-      // [PERBAIKAN] Atur 'isGrabbable' di dalam metadata
+      // [PERBAIKAN 1]
       if (!rootMesh.metadata) { rootMesh.metadata = {}; }
       rootMesh.metadata.isGrabbable = true;
       rootMesh.metadata.itemData = { title: "Kasa" };
@@ -255,17 +251,17 @@
      rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
         rootMesh,
         BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 1, restitution: 0.4 }, 
+        { mass: 0.01, restitution: 0.4 }, // [PERBAIKAN 2]
         scene
       );
     });
 
     BABYLON.SceneLoader.ImportMesh("", "assets/", "suntik.glb", scene, function (meshes) {
-     const rootMesh = meshes[0]; // ambil mesh utama
+     const rootMesh = meshes[0];
      rootMesh.position = new BABYLON.Vector3(-13, 2, 9.9);
      rootMesh.scaling = new BABYLON.Vector3(0.001, 0.001, 0.001);
 
-      // [PERBAIKAN] Atur 'isGrabbable' di dalam metadata
+      // [PERBAIKAN 1]
       if (!rootMesh.metadata) { rootMesh.metadata = {}; }
       rootMesh.metadata.isGrabbable = true;
       rootMesh.metadata.itemData = { title: "Suntik" };
@@ -273,18 +269,18 @@
      rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
         rootMesh,
         BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 1, restitution: 0.4 }, 
+        { mass: 0.01, restitution: 0.4 }, // [PERBAIKAN 2]
         scene
       );
     });
 
     BABYLON.SceneLoader.ImportMesh("", "assets/", "thermometer.glb", scene, function (meshes) {
-     const rootMesh = meshes[0]; // ambil mesh utama
+     const rootMesh = meshes[0];
      rootMesh.position = new BABYLON.Vector3(-13, 2, 11.7);
      rootMesh.scaling = new BABYLON.Vector3(0.25, 0.25, 0.25);
      rootMesh.rotation = new BABYLON.Vector3(80, 160, 0);
 
-      // [PERBAIKAN] Atur 'isGrabbable' di dalam metadata
+      // [PERBAIKAN 1]
       if (!rootMesh.metadata) { rootMesh.metadata = {}; }
       rootMesh.metadata.isGrabbable = true;
       rootMesh.metadata.itemData = { title: "Thermometer" };
@@ -292,19 +288,19 @@
      rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
         rootMesh,
         BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 1, restitution: 0.4 }, 
+        { mass: 0.01, restitution: 0.4 }, // [PERBAIKAN 2]
         scene
       );
      rootMesh.applyGravity = true;
     });
 
     BABYLON.SceneLoader.ImportMesh("", "assets/", "tensimeter.glb", scene, function (meshes) {
-     const rootMesh = meshes[0]; // ambil mesh utama
+     const rootMesh = meshes[0];
      rootMesh.position = new BABYLON.Vector3(-13, 2, 13.8);
      rootMesh.scaling = new BABYLON.Vector3(0.3, 0.3, 0.3);
      rootMesh.rotation = new BABYLON.Vector3(-110, 160, 100);
 
-      // [PERBAIKAN] Atur 'isGrabbable' di dalam metadata
+      // [PERBAIKAN 1]
       if (!rootMesh.metadata) { rootMesh.metadata = {}; }
       rootMesh.metadata.isGrabbable = true;
       rootMesh.metadata.itemData = { title: "Tensimeter" };
@@ -312,7 +308,7 @@
      rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
         rootMesh,
         BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 1, restitution: 0.4 }, 
+        { mass: 0.01, restitution: 0.4 }, // [PERBAIKAN 2]
         scene
       );
 
@@ -336,8 +332,7 @@
       scene
     );
 
-    // [PERBAIKAN] PANGGIL FUNGSI DARI GRAB.JS DI SINI
-    // Ini akan mengaktifkan listener untuk mouse dan VR controller
+    // [PERBAIKAN 3] PANGGIL FUNGSI DARI GRAB.JS DI SINI
     setupGrabLogic(scene, xr);
 
     return scene;
