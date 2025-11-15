@@ -52,7 +52,7 @@ function setupGrabLogic(scene, xr) {
                 const controller = xr.input.getControllerByPointerId(pointerInfo.event.pointerId);
 
                 // Cek apakah controller ada dan merupakan TANGAN KANAN
-                if (controller && controller.inputSource.handedness === 'right') {
+                if (controller && controller.inputSource && controller.inputSource.handedness === 'right') {
                     // Ini adalah 'Right Trigger'
                     pickUpItem(pickResult.pickedMesh);
                 }
@@ -71,3 +71,4 @@ function setupGrabLogic(scene, xr) {
 
     console.log("✅ Logika Grab (pickUpItem) dari file eksternal aktif.");
 }
+
