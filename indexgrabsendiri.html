@@ -14,16 +14,11 @@
 
   <script src="js/physics.js"></script>
  <script src="js/grab.js"></script>
-
-
 </head>
+
 <body>
  <canvas id="renderCanvas"></canvas>
-
  <script>
-  // ================================
-  // Inisialisasi Engine & Canvas
-  // ================================
   const canvas = document.getElementById("renderCanvas");
   const engine = new BABYLON.Engine(canvas, true);
 
@@ -59,285 +54,220 @@
    dirLight.intensity = 1;
 
    // ================================
-    // Kamera sebagai "Player" (POV manusia)
-    // ================================
-    const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(-15, 2, 0), scene);
-  camera.attachControl(canvas, true);
-  camera.applyGravity = true;
-  camera.ellipsoid = new BABYLON.Vector3(0.5, 1, 0.5);
-  camera.checkCollisions = true;
-  camera.speed = 0.2;
-  camera.keysUp.push(87); camera.keysDown.push(83); camera.keysLeft.push(65); camera.keysRight.push(68); 
+      // Kamera sebagai "Player" (POV manusia)
+      // ================================
+      const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(-15, 2, 0), scene);
+   camera.attachControl(canvas, true);
+   camera.applyGravity = true;
+   camera.ellipsoid = new BABYLON.Vector3(0.5, 1, 0.5);
+   camera.checkCollisions = true;
+   camera.speed = 0.2;
+   camera.keysUp.push(87); camera.keysDown.push(83); camera.keysLeft.push(65); camera.keysRight.push(68); 
 
-  let xr = null;
+   let xr = null;
 
    // ================================
-    // Tambahkan Model + Collision
-    // ================================
-    BABYLON.SceneLoader.ImportMeshAsync("", "assets/", "ruang_periksa.glb", scene 
-  ).then((result) => {
-    if (result.meshes.length > 0) {
-      result.meshes[0].position = new BABYLON.Vector3(-22.5, 0, 8);
-      result.meshes[0].scaling = new BABYLON.Vector3(-0.5, 0.5, 0.5);
-      result.meshes[0].getChildMeshes().forEach(mesh => { 
-        mesh.checkCollisions = true;
-      });
-    }
-  }).catch((error) => { console.error("Gagal memuat model:", error); });
+      // Tambahkan Model + Collision
+      // ================================
+      BABYLON.SceneLoader.ImportMeshAsync("", "assets/", "ruang_periksa.glb", scene 
+   ).then((result) => {
+     if (result.meshes.length > 0) {
+       result.meshes[0].position = new BABYLON.Vector3(-22.5, 0, 8);
+       result.meshes[0].scaling = new BABYLON.Vector3(-0.5, 0.5, 0.5);
+       result.meshes[0].getChildMeshes().forEach(mesh => { 
+         mesh.checkCollisions = true;
+        });
+     }
+   }).catch((error) => { console.error("Gagal memuat model:", error); });
 
 
    // ================================
    // Aktifkan VR / XR Mode
    // ================================
-    try {
-    xr = await scene.createDefaultXRExperienceAsync({
-     floorMeshes: [ground],
-     disableTeleportation: true,
-     cameraOptions:{
-      checkCollisions: true,
-      applyGravity: true,
-      ellipsoid: new BABYLON.Vector3(0.5, 2, 0.5)
-     }
-    });
-    console.log("✅ WebXR aktif");
-    const xrCamera = xr.baseExperience.camera;
-    xrCamera.position.y = 4;
-    xrCamera.applyGravity = true;
-    xrCamera.checkCollisions = true;
+      try {
+     xr = await scene.createDefaultXRExperienceAsync({
+      floorMeshes: [ground],
+      disableTeleportation: true,
+      cameraOptions:{
+       checkCollisions: true,
+       applyGravity: true,
+       ellipsoid: new BABYLON.Vector3(0.5, 2, 0.5)
+      }
+     });
+     console.log("✅ WebXR aktif");
+     const xrCamera = xr.baseExperience.camera;
+     xrCamera.position.y = 4;
+     xrCamera.applyGravity = true;
+     xrCamera.checkCollisions = true;
 
-    xr.baseExperience.featuresManager.enableFeature(
-     BABYLON.WebXRFeatureName.MOVEMENT,
-     "latest",
-     {
-      xrInput: xr.input,
-      movementSpeed: 0.1,
-      rotationSpeed: 0.2,
-      movementControls: ["left-xr-standard-thumbstick"],
-      rotationControls: ["right-xr-standard-thumbstick"],
-      useThumbstickForMovement: true,
-      disableTeleportOnThumbstick: true,
-      checkCollisions: true,
-      applyGravity: true,
-      ellipsoid: new BABYLON.Vector3(0.5, 2, 0.5)
-     }
-    );
+     xr.baseExperience.featuresManager.enableFeature(
+      BABYLON.WebXRFeatureName.MOVEMENT,
+      "latest",
+      {
+       xrInput: xr.input,
+       movementSpeed: 0.1,
+       rotationSpeed: 0.2,
+       movementControls: ["left-xr-standard-thumbstick"],
+       rotationControls: ["right-xr-standard-thumbstick"],
+       useThumbstickForMovement: true,
+       disableTeleportOnThumbstick: true,
+       checkCollisions: true,
+       applyGravity: true,
+       ellipsoid: new BABYLON.Vector3(0.5, 2, 0.5)
+      }
+     );
    } catch (e) {
-    console.warn("⚠️ WebXR tidak didukung, pakai mode biasa:", e);
-    scene.activeCamera = camera;
-    camera.applyGravity = true;
-    camera.checkCollisions = true;
-    
+     console.warn("⚠️ WebXR tidak didukung, pakai mode biasa:", e);
+     scene.activeCamera = camera;
+     camera.applyGravity = true;
+     camera.checkCollisions = true;
    }
-   console.log("WebXR state: ", xr ? xr.baseExperience.state : "NULL");
+      if (xr) {
+        console.log("WebXR state: ", xr.baseExperience.state);
+      }
    console.log("Current Camera: ", scene.activeCamera.name);
   
 
-    // ================================
-    // Muat GLB dengan physics
-    // ================================
-    BABYLON.SceneLoader.ImportMesh("", "assets/", "perban.glb", scene, function (meshes) {
-     const rootMesh = meshes[0];
-     rootMesh.position = new BABYLON.Vector3(-17, 2, 7.8);
-     rootMesh.scaling = new BABYLON.Vector3(0.03, 0.03, 0.03);
+      // ===================================================
+      // [PERBAIKAN TOTAL] Muat GLB dengan "Wrapper" Fisika
+      // ===================================================
+
+      // Tentukan ukuran box fisika (sesuaikan jika perlu)
+      const itemPhysicsSize = 0.2; // 20cm
+      const itemPhysicsMass = 0.01; // Massa ringan
+      const startY = 2.0; // Ketinggian awal item
+
+      /**
+       * Fungsi Helper untuk memuat item grabbable dengan wrapper fisika
+       */
+      function createGrabbableItem(name, glbFile, position, scaling, rotation) {
+          // 1. Buat Wrapper Box (yang akan kena fisika)
+          const wrapper = BABYLON.MeshBuilder.CreateBox(name + "Wrapper", {
+              size: itemPhysicsSize // Ukuran box fisika
+          }, scene);
+          wrapper.position = position; // Posisi di dunia
+          wrapper.isVisible = false; // Sembunyikan box fisika
+
+          // 2. Tambahkan metadata ke WRAPPER
+          wrapper.metadata = {
+              isGrabbable: true,
+              itemData: { title: name }
+          };
+
+          // 3. Tambahkan fisika ke WRAPPER
+          wrapper.physicsImpostor = new BABYLON.PhysicsImpostor(
+              wrapper,
+              BABYLON.PhysicsImpostor.BoxImpostor,
+              { mass: itemPhysicsMass, restitution: 0.4 },
+              scene
+          );
+
+          // 4. Muat model GLB
+          BABYLON.SceneLoader.ImportMesh("", "assets/", glbFile, scene, function (meshes) {
+           const rootMesh = meshes[0];
+          
+            // 5. Parent-kan GLB ke WRAPPER
+           rootMesh.setParent(wrapper);
+          
+            // 6. Atur posisi/skala/rotasi GLB RELATIF ke wrapper
+           rootMesh.position = new BABYLON.Vector3(0, 0, 0); // Selalu (0,0,0) relatif ke parent
+           rootMesh.scaling = scaling;
+              if (rotation) {
+                  rootMesh.rotation = rotation;
+              }
+          });
+      }
+
+      // --- Gunakan helper untuk memuat semua item ---
+
+      createGrabbableItem("Perban", "perban.glb", 
+          new BABYLON.Vector3(-17, startY, 7.8), 
+          new BABYLON.Vector3(0.03, 0.03, 0.03)
+      );
+
+      createGrabbableItem("Oximeter", "oximeter.glb", 
+          new BABYLON.Vector3(-17, startY, 9.7), 
+          new BABYLON.Vector3(0.13, 0.13, 0.13)
+      );
+
+      createGrabbableItem("Gunting Medis", "gunting medis.glb", 
+          new BABYLON.Vector3(-17, startY, 11.7), 
+          new BABYLON.Vector3(0.015, 0.015, 0.015)
+      );
+
+      createGrabbableItem("Reflex Hammer", "reflex hammer.glb", 
+          new BABYLON.Vector3(-17, startY, 13.8), 
+          new BABYLON.Vector3(3, 3, 3)
+      );
       
-      // [PERBAIKAN 1] Atur 'isGrabbable' di dalam metadata
-      if (!rootMesh.metadata) { rootMesh.metadata = {}; }
-      rootMesh.metadata.isGrabbable = true;
-      rootMesh.metadata.itemData = { title: "Perban" };
-
-     rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        rootMesh,
-        BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 0.01, restitution: 0.4 }, // [PERBAIKAN 2] Ubah mass dari 1 ke 0.01
-        scene
+      createGrabbableItem("Stethoscope", "stethoscope.glb", 
+          new BABYLON.Vector3(-17, startY, 15.6), 
+          new BABYLON.Vector3(0.0015, 0.0015, 0.0015)
       );
-    });
 
-
-    BABYLON.SceneLoader.ImportMesh("", "assets/", "oximeter.glb", scene, function (meshes) {
-     const rootMesh = meshes[0];
-     rootMesh.position = new BABYLON.Vector3(-17, 2, 9.7);
-     rootMesh.scaling = new BABYLON.Vector3(0.13, 0.13, 0.13);
-
-      // [PERBAIKAN 1]
-      if (!rootMesh.metadata) { rootMesh.metadata = {}; }
-      rootMesh.metadata.isGrabbable = true;
-      rootMesh.metadata.itemData = { title: "Oximeter" };
-
-     rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        rootMesh,
-        BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 0.01, restitution: 0.4 }, // [PERBAIKAN 2]
-        scene
+      createGrabbableItem("Kasa", "kasa.glb", 
+          new BABYLON.Vector3(-13, startY, 7.8), 
+          new BABYLON.Vector3(5, 5, 5)
       );
-    });
 
-    BABYLON.SceneLoader.ImportMesh("", "assets/", "gunting medis.glb", scene, function (meshes) {
-     const rootMesh = meshes[0];
-     rootMesh.position = new BABYLON.Vector3(-17, 2, 11.7);
-     rootMesh.scaling = new BABYLON.Vector3(0.015, 0.015, 0.015);
+      createGrabbableItem("Suntik", "suntik.glb", 
+          new BABYLON.Vector3(-13, startY, 9.9), 
+          new BABYLON.Vector3(0.001, 0.001, 0.001)
+      );
+
+      createGrabbableItem("Thermometer", "thermometer.glb", 
+          new BABYLON.Vector3(-13, startY, 11.7), 
+          new BABYLON.Vector3(0.25, 0.25, 0.25),
+          new BABYLON.Vector3(80, 160, 0) // Rotasi
+      );
+
+      createGrabbableItem("Tensimeter", "tensimeter.glb", 
+          new BABYLON.Vector3(-13, startY, 13.8), 
+          new BABYLON.Vector3(0.3, 0.3, 0.3),
+          new BABYLON.Vector3(-110, 160, 100) // Rotasi
+      );
+
+      // ===================================================
+      // Item STATIS (Tidak bisa diambil) - Tetap sama
+      // ===================================================
+      BABYLON.SceneLoader.ImportMesh("", "assets/", "TIANG INFUS.glb", scene, function (meshes) {
+       const rootMesh = meshes[0];
+       rootMesh.position = new BABYLON.Vector3(-11, 0.1, 5.4);
+       rootMesh.scaling = new BABYLON.Vector3(0.04, 0.04, 0.04);
+       rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
+          rootMesh,
+          BABYLON.PhysicsImpostor.BoxImpostor, 
+          { mass: 0, restitution: 0.4 }, // massa 0 = statis
+          scene
+        );
+      });
+
+      // ===================================================
+      // Meja Kolisi (Tetap sama)
+      // ===================================================
+      const mejaCollision1= BABYLON.MeshBuilder.CreateBox("mejaCollision", {height: 1.6, width: 0.7, depth: 10}, scene);
+      mejaCollision1.position = new BABYLON.Vector3(-17, 0.5, 12);
+      mejaCollision1.isVisible = false; 
+      mejaCollision1.physicsImpostor = new BABYLON.PhysicsImpostor(
+        mejaCollision1, BABYLON.PhysicsImpostor.BoxImpostor, 
+        { mass: 0, restitution: 0.2 }, scene
+      );
       
-      // [PERBAIKAN 1]
-      if (!rootMesh.metadata) { rootMesh.metadata = {}; }
-      rootMesh.metadata.isGrabbable = true;
-      rootMesh.metadata.itemData = { title: "Gunting Medis" };
-
-     rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        rootMesh,
-        BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 0.01, restitution: 0.4 }, // [PERBAIKAN 2]
-        scene
-      );
-    });
-
-    BABYLON.SceneLoader.ImportMesh("", "assets/", "reflex hammer.glb", scene, function (meshes) {
-     const rootMesh = meshes[0];
-     rootMesh.position = new BABYLON.Vector3(-17, 2, 13.8);
-     rootMesh.scaling = new BABYLON.Vector3(3, 3, 3);
-      
-      // [PERBAIKAN 1]
-      if (!rootMesh.metadata) { rootMesh.metadata = {}; }
-      rootMesh.metadata.isGrabbable = true;
-      rootMesh.metadata.itemData = { title: "Reflex Hammer" };
-
-     rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        rootMesh,
-        BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 0.01, restitution: 0.4 }, // [PERBAIKAN 2]
-        scene
-      );
-    });
-
-    BABYLON.SceneLoader.ImportMesh("", "assets/", "stethoscope.glb", scene, function (meshes) {
-     const rootMesh = meshes[0];
-     rootMesh.position = new BABYLON.Vector3(-17, 2, 15.6);
-     rootMesh.scaling = new BABYLON.Vector3(0.0015, 0.0015, 0.0015);
-      
-      // [PERBAIKAN 1]
-      if (!rootMesh.metadata) { rootMesh.metadata = {}; }
-      rootMesh.metadata.isGrabbable = true;
-      rootMesh.metadata.itemData = { title: "Stethoscope" };
-
-     rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        rootMesh,
-        BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 0.01, restitution: 0.4 }, // [PERBAIKAN 2]
-        scene
-      );
-    });
-
-    BABYLON.SceneLoader.ImportMesh("", "assets/", "TIANG INFUS.glb", scene, function (meshes) {
-     const rootMesh = meshes[0];
-     rootMesh.position = new BABYLON.Vector3(-11, 0.1, 5.4);
-     rootMesh.scaling = new BABYLON.Vector3(0.04, 0.04, 0.04);
-     rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        rootMesh,
-        BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 0, restitution: 0.4 }, 
-        scene
-      );
-    });
-
-    BABYLON.SceneLoader.ImportMesh("", "assets/", "kasa.glb", scene, function (meshes) {
-     const rootMesh = meshes[0];
-     rootMesh.position = new BABYLON.Vector3(-13, 2, 7.8);
-     rootMesh.scaling = new BABYLON.Vector3(5, 5, 5);
-      
-      // [PERBAIKAN 1]
-      if (!rootMesh.metadata) { rootMesh.metadata = {}; }
-      rootMesh.metadata.isGrabbable = true;
-      rootMesh.metadata.itemData = { title: "Kasa" };
-
-     rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        rootMesh,
-        BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 0.01, restitution: 0.4 }, // [PERBAIKAN 2]
-        scene
-      );
-    });
-
-    BABYLON.SceneLoader.ImportMesh("", "assets/", "suntik.glb", scene, function (meshes) {
-     const rootMesh = meshes[0];
-     rootMesh.position = new BABYLON.Vector3(-13, 2, 9.9);
-     rootMesh.scaling = new BABYLON.Vector3(0.001, 0.001, 0.001);
-
-      // [PERBAIKAN 1]
-      if (!rootMesh.metadata) { rootMesh.metadata = {}; }
-      rootMesh.metadata.isGrabbable = true;
-      rootMesh.metadata.itemData = { title: "Suntik" };
-
-     rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        rootMesh,
-        BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 0.01, restitution: 0.4 }, // [PERBAIKAN 2]
-        scene
-      );
-    });
-
-    BABYLON.SceneLoader.ImportMesh("", "assets/", "thermometer.glb", scene, function (meshes) {
-     const rootMesh = meshes[0];
-     rootMesh.position = new BABYLON.Vector3(-13, 2, 11.7);
-     rootMesh.scaling = new BABYLON.Vector3(0.25, 0.25, 0.25);
-     rootMesh.rotation = new BABYLON.Vector3(80, 160, 0);
-
-      // [PERBAIKAN 1]
-      if (!rootMesh.metadata) { rootMesh.metadata = {}; }
-      rootMesh.metadata.isGrabbable = true;
-      rootMesh.metadata.itemData = { title: "Thermometer" };
-
-     rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        rootMesh,
-        BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 0.01, restitution: 0.4 }, // [PERBAIKAN 2]
-        scene
-      );
-     rootMesh.applyGravity = true;
-    });
-
-    BABYLON.SceneLoader.ImportMesh("", "assets/", "tensimeter.glb", scene, function (meshes) {
-     const rootMesh = meshes[0];
-     rootMesh.position = new BABYLON.Vector3(-13, 2, 13.8);
-     rootMesh.scaling = new BABYLON.Vector3(0.3, 0.3, 0.3);
-     rootMesh.rotation = new BABYLON.Vector3(-110, 160, 100);
-
-      // [PERBAIKAN 1]
-      if (!rootMesh.metadata) { rootMesh.metadata = {}; }
-      rootMesh.metadata.isGrabbable = true;
-      rootMesh.metadata.itemData = { title: "Tensimeter" };
-
-     rootMesh.physicsImpostor = new BABYLON.PhysicsImpostor(
-        rootMesh,
-        BABYLON.PhysicsImpostor.BoxImpostor, 
-        { mass: 0.01, restitution: 0.4 }, // [PERBAIKAN 2]
-        scene
+      const mejaCollision2= BABYLON.MeshBuilder.CreateBox("mejaCollision", {height: 1.6, width: 0.7, depth: 10}, scene);
+      mejaCollision2.position = new BABYLON.Vector3(-13, 0.5, 12);
+      mejaCollision2.isVisible = false;
+      mejaCollision2.physicsImpostor = new BABYLON.PhysicsImpostor(
+        mejaCollision2, BABYLON.PhysicsImpostor.BoxImpostor, 
+        { mass: 0, restitution: 0.2 }, scene
       );
 
-    });
-    const mejaCollision1= BABYLON.MeshBuilder.CreateBox("mejaCollision", {height: 1.6, width: 0.7, depth: 10}, scene);
-    mejaCollision1.position = new BABYLON.Vector3(-17, 0.5, 12);
-    mejaCollision1.isVisible = false; // Dibuat tidak terlihat
-    mejaCollision1.physicsImpostor = new BABYLON.PhysicsImpostor(
-      mejaCollision1,
-      BABYLON.PhysicsImpostor.BoxImpostor, 
-      { mass: 0, restitution: 0.2 }, 
-      scene
-    );
-    const mejaCollision2= BABYLON.MeshBuilder.CreateBox("mejaCollision", {height: 1.6, width: 0.7, depth: 10}, scene);
-    mejaCollision2.position = new BABYLON.Vector3(-13, 0.5, 12);
-    mejaCollision2.isVisible = false; // Dibuat tidak terlihat
-    mejaCollision2.physicsImpostor = new BABYLON.PhysicsImpostor(
-      mejaCollision2,
-      BABYLON.PhysicsImpostor.BoxImpostor, 
-      { mass: 0, restitution: 0.2 }, 
-      scene
-    );
+      // ===================================================
+      // [PENTING] PANGGIL FUNGSI DARI GRAB.JS DI AKHIR
+      // ===================================================
+      setupGrabLogic(scene, xr);
 
-    // [PERBAIKAN 3] PANGGIL FUNGSI DARI GRAB.JS DI SINI
-    setupGrabLogic(scene, xr);
-
-    return scene;
+      return scene;
   };
-
   
   // ================================
   // Jalankan Scene
