@@ -1,4 +1,4 @@
-// File: js/grab-logic.js
+// File: js/grab.js
 
 /**
  * Fungsi helper yang dieksekusi saat item diambil (NON-VR).
@@ -8,7 +8,9 @@ function pickUpItem(pickedMesh) {
     // Cek metadata yang sudah ditambahkan di loadItem
     if (pickedMesh && pickedMesh.metadata && pickedMesh.metadata.isGrabbable) {
         
-        console.log("ITEM DIAMBIL:", pickedMesh.metadata.itemData.title);
+        // Gunakan data dari metadata jika ada
+        const itemName = pickedMesh.metadata.itemData ? pickedMesh.metadata.itemData.title : pickedMesh.name;
+        console.log("ITEM DIAMBIL:", itemName);
 
         // Aksi "Mengambil"
         pickedMesh.setEnabled(false);
@@ -96,6 +98,7 @@ function setupVRInput(xr, scene) {
             if (motionController) {
                 console.log("Motion Controller siap:", motionController.id, "Hand:", controller.inputSource.handedness);
 
+                // Kita hanya peduli controller KANAN untuk grab
                 if (controller.inputSource.handedness === 'right') {
                     
                     const triggerComponent = motionController.getComponent(BABYLON.WebXRControllerComponent.TRIGGER);
@@ -124,7 +127,8 @@ function setupVRInput(xr, scene) {
                                         const grabbableMesh = findGrabbableParent(pickResult.pickedMesh);
                                         
                                         if (grabbableMesh) {
-                                            console.log("VR Grab: Memegang ->", grabbableMesh.name);
+                                            const itemName = grabbableMesh.metadata.itemData ? grabbableMesh.metadata.itemData.title : grabbableMesh.name;
+                                            console.log("VR Grab: Memegang ->", itemName);
                                             
                                             // [INTI BARU] Cari impostor di mesh atau anaknya
                                             const impostor = findPhysicsImpostor(grabbableMesh);
@@ -158,15 +162,19 @@ function setupVRInput(xr, scene) {
                                 console.log("VR Trigger Kanan DILEPAS");
 
                                 if (heldItem.mesh) { // Cek jika kita sedang memegang sesuatu
-                                    console.log("VR Release: Melepas ->", heldItem.mesh.name);
+                                    const itemName = heldItem.mesh.metadata.itemData ? heldItem.mesh.metadata.itemData.title : heldItem.mesh.name;
+                                    console.log("VR Release: Melepas ->", itemName);
                                     
                                     // 1. Lepas dari parent
                                     heldItem.mesh.setParent(null);
                                     
                                     // 2. Aktifkan kembali physics (jika ada)
                                     if (heldItem.impostor) {
-                                        console.log("Physics impostor diaktifkan kembali, massa di-set ke 1.");
-                                        heldItem.impostor.setMass(1); // Atur ke massa aslinya (misal 1)
+                                        console.log("Physics impostor diaktifkan kembali, massa di-set ke 0.01.");
+                                        
+                                        // [PERBAIKAN 4] Ubah massa kembali ke 0.01, bukan 1
+                                        heldItem.impostor.setMass(0.01); 
+                                        
                                         heldItem.impostor.wakeUp();
                                     }
                                     
@@ -198,10 +206,12 @@ function setupGrabLogic(scene, xr) {
     // ===================================
     scene.onPointerObservable.add((pointerInfo) => {
         
+        // Hanya proses jika input adalah mouse
         if (pointerInfo.event.pointerType !== 'mouse') {
             return;
         }
 
+        // Hanya proses saat tombol mouse ditekan
         if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERDOWN) {
             
             const pickResult = pointerInfo.pickInfo;
@@ -216,7 +226,8 @@ function setupGrabLogic(scene, xr) {
                 const grabbableMesh = findGrabbableParent(pickResult.pickedMesh);
                 
                 if (grabbableMesh) {
-                    console.log("Mouse: Kena item ->", grabbableMesh.name);
+                    const itemName = grabbableMesh.metadata.itemData ? grabbableMesh.metadata.itemData.title : grabbableMesh.name;
+                    console.log("Mouse: Kena item ->", itemName);
                     pickUpItem(grabbableMesh); // Logika mouse tetap 'ambil' (bukan hold)
                 } else {
                     console.log("Mouse: Kena mesh, tapi tidak grabbable/GUI:", pickResult.pickedMesh.name);
