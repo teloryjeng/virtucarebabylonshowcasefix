@@ -40,7 +40,10 @@ function setupGrabLogic(scene, xr) {
             if (!pickResult || !pickResult.hit || !pickResult.pickedMesh) {
                 return; // Tidak kena apa-apa, abaikan
             }
-
+            const pickedMeshName=pickResult.pickedMesh.name;
+            if(pickedMeshName.startsWith("btn_plane_")||pickedMeshName==="infoPlane"){
+                return;
+            }
             // Cek apakah sedang dalam mode VR
             // (Gunakan "xr && ..." untuk keamanan jika xr gagal inisialisasi)
             if (xr && xr.baseExperience.state === BABYLON.WebXRState.IN_XR) {
