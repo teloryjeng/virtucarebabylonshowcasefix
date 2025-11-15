@@ -1,17 +1,10 @@
-/**
- * js/grab.js
- * * Berisi logika untuk interaksi Mouse Drag (Desktop) dan VR Grab (VR)
- * untuk item-item yang menggunakan physics wrapper.
- * * Fungsi ini dipanggil di akhir file HTML.
- */
+// js/grab.js (Final - Termasuk UI Fix dan addMesh Fix)
+
 function setupVRInput(xr, scene) {
     console.log("Menginisialisasi interaksi grab (VR & Mouse)...");
 
-    // --- Variabel Bersama ---
     const highlightColor = new BABYLON.Color3.Green();
-    
-    // Massa asli item, sesuai dengan 'itemDatabase' di HTML
-    const originalMass = 1; 
+    const originalMass = 1; // Massa asli item (sesuai itemDatabase)
 
 
     // ============================================================
@@ -20,38 +13,28 @@ function setupVRInput(xr, scene) {
 
     const hlMouse = new BABYLON.HighlightLayer("HL_MOUSE_PHYSICS", scene);
 
-    // Iterasi semua mesh di scene untuk menemukan yang 'grabbable'
     scene.meshes.forEach((mesh) => {
-        // Kita mencari 'wrapper' yang dibuat di HTML
         if (mesh.metadata && mesh.metadata.isGrabbable) {
-            
             const wrapper = mesh;
-            // Dapatkan model GLB di dalamnya (anak pertama) untuk di-highlight
             const childModel = wrapper.getChildren()[0];
-
-            // Tambahkan behavior drag ke wrapper
             const dragBehavior = new BABYLON.PointerDragBehavior({});
             wrapper.addBehavior(dragBehavior);
 
-            // Saat mulai di-drag
             dragBehavior.onDragStartObservable.add(() => {
                 if (wrapper.physicsImpostor) {
-                    // Matikan fisika sementara agar bisa di-drag
                     wrapper.physicsImpostor.setMass(0);
                     wrapper.physicsImpostor.sleep();
                 }
                 if (childModel) {
-                    // Highlight semua mesh visual di dalam model GLB
-                    childModel.getDescendants(false).forEach(m => {
+                    // [FIX] Gunakan getChildMeshes
+                    childModel.getChildMeshes(false).forEach(m => {
                         hlMouse.addMesh(m, highlightColor);
                     });
                 }
             });
 
-            // Saat selesai di-drag
             dragBehavior.onDragEndObservable.add(() => {
                 if (wrapper.physicsImpostor) {
-                    // Kembalikan massa agar fisika aktif lagi
                     wrapper.physicsImpostor.setMass(originalMass);
                     wrapper.physicsImpostor.wakeUp();
                 }
@@ -64,10 +47,9 @@ function setupVRInput(xr, scene) {
     // 2. VR GRAB (Virtual Reality)
     // ============================================================
 
-    // Cek jika XR (VR) tidak aktif
     if (!xr) {
         console.warn("VR (xr) tidak aktif. VR Grab tidak diinisialisasi.");
-        return; // Hentikan eksekusi jika tidak ada VR
+        return;
     }
 
     const hlVR = new BABYLON.HighlightLayer("HL_VR_PHYSICS", scene);
@@ -75,7 +57,6 @@ function setupVRInput(xr, scene) {
     xr.input.onControllerAddedObservable.add((controller) => {
         controller.onMotionControllerInitObservable.add((motionController) => {
             
-            // Dapatkan komponen tombol (trigger atau squeeze)
             const triggerComponent = motionController.getComponent("trigger");
             const squeezeComponent = motionController.getComponent("squeeze");
             const grabComponent = triggerComponent || squeezeComponent;
@@ -83,19 +64,36 @@ function setupVRInput(xr, scene) {
             if (!grabComponent) return;
 
             let grabbedMesh = null;
-            // Gunakan 'grip' untuk posisi tangan yang lebih akurat
             const hand = controller.grip || controller.pointer; 
 
             grabComponent.onButtonStateChangedObservable.add((state) => {
                 
                 if (state.pressed) {
                     // --- COBA GRAB ---
-                    if (grabbedMesh) return; // Sudah memegang sesuatu
+                    if (grabbedMesh) return; 
 
+                    // =================================================
+                    // === INI ADALAH BAGIAN PENTING UNTUK FIX UI ===
+                    //
+                    // Cek apakah pointer sedang di atas tombol "i"
+                    if (xr.pointerSelection) {
+                        const meshUnderPointer = xr.pointerSelection.getMeshUnderPointer(controller.uniqueId);
+                        
+                        // Jika pointer menunjuk ke "btn_plane_" (tombol 'i')
+                        if (meshUnderPointer && meshUnderPointer.name.startsWith("btn_plane_")) {
+                            // Batalkan grab. Biarkan UI (dari HTML) menangani klik.
+                            console.log("Pointer di atas UI, grab dibatalkan.");
+                            return; 
+                        }
+                    }
+                    // =================================================
+
+
+                    // --- Logika Grab (Jarak) ---
+                    // Kode ini hanya akan berjalan jika pointer TIDAK di atas tombol 'i'
                     let closestMesh = null;
-                    let minDistance = 0.2; // Jarak maksimum grab (20cm)
+                    let minDistance = 0.2; 
 
-                    // Cek semua item grabbable di scene
                     scene.meshes.forEach((mesh) => {
                         if (mesh.metadata && mesh.metadata.isGrabbable) {
                             const dist = BABYLON.Vector3.Distance(
@@ -109,23 +107,20 @@ function setupVRInput(xr, scene) {
                         }
                     });
 
-                    // Jika ada item yang cukup dekat
                     if (closestMesh) {
                         grabbedMesh = closestMesh;
 
-                        // Matikan fisika
                         if (grabbedMesh.physicsImpostor) {
                             grabbedMesh.physicsImpostor.setMass(0);
                             grabbedMesh.physicsImpostor.sleep();
                         }
 
-                        // Parent-kan item (wrapper) ke tangan/controller
                         grabbedMesh.setParent(hand);
 
-                        // Highlight model di dalamnya
                         const childModel = grabbedMesh.getChildren()[0];
                         if (childModel) {
-                            childModel.getDescendants(false).forEach(m => {
+                            // [FIX] Gunakan getChildMeshes
+                            childModel.getChildMeshes(false).forEach(m => {
                                 hlVR.addMesh(m, highlightColor);
                             });
                         }
@@ -135,21 +130,18 @@ function setupVRInput(xr, scene) {
                     // --- COBA RELEASE ---
                     if (grabbedMesh) {
                         
-                        // Lepas parent dari tangan
                         grabbedMesh.setParent(null);
 
-                        // Aktifkan lagi fisika
                         if (grabbedMesh.physicsImpostor) {
                             grabbedMesh.physicsImpostor.setMass(originalMass);
                             grabbedMesh.physicsImpostor.wakeUp();
 
-                            // Beri 'lemparan' (velocity) berdasarkan gerakan tangan
                             const linearVelocity = hand.getLinearVelocity();
                             const angularVelocity = hand.getAngularVelocity();
 
                             if (linearVelocity) {
                                 grabbedMesh.physicsImpostor.setLinearVelocity(
-                                    linearVelocity.scale(1.5) // Sesuaikan pengali (1.5) jika lemparan terlalu kuat/lemah
+                                    linearVelocity.scale(1.5)
                                 );
                             }
                             if (angularVelocity) {
@@ -159,7 +151,6 @@ function setupVRInput(xr, scene) {
                             }
                         }
 
-                        // Hapus highlight
                         hlVR.removeAllMeshes();
                         grabbedMesh = null;
                     }
