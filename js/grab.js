@@ -44,11 +44,16 @@ function setupGrabLogic(scene, xr) {
             if(pickedMeshName.startsWith("btn_plane_")||pickedMeshName==="infoPlane"){
                 return;
             }
-            // Cek apakah sedang dalam mode VR
-            // (Gunakan "xr && ..." untuk keamanan jika xr gagal inisialisasi)
-            if (xr && xr.baseExperience.state === BABYLON.WebXRState.IN_XR) {
-                
-                // --- LOGIKA VR ---
+
+            const event=pointerInfo.event;
+
+            if (event.pointerType==="mouse") {
+                if(event.button!==0){
+                    console.log("Input mouse kiri");
+                    pickUpItem(pickResult.pickedMesh);
+                }
+            }
+            else if(event.pointerType==="xr-input-source"){
                 const inputSource = pointerInfo.inputSource;
 
                 // Cek apakah event ini berasal dari controller,
@@ -58,20 +63,9 @@ function setupGrabLogic(scene, xr) {
                     // Ini adalah 'Right Trigger'
                     pickUpItem(pickResult.pickedMesh);
                 }
-                // Jika event dari tangan kiri, atau bukan controller,
-                // maka akan diabaikan.
-                
-                // =======================================================
-                
-            } else {
-                
-                // --- LOGIKA NON-VR (DESKTOP) ---
-                // Cek apakah ini klik kiri (tombol utama mouse)
-                if (pointerInfo.event.button === 0) {
-                    // Ini adalah 'Klik Kiri'
-                    pickUpItem(pickResult.pickedMesh);
-                }
             }
+            // Cek apakah sedang dalam mode VR
+            // (Gunakan "xr && ..." untuk keamanan jika xr gagal inisialisasi)
         }
     });
 
