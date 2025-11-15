@@ -46,7 +46,7 @@ function findGrabbableParent(startingMesh) {
 }
 
 /**
- * [BARU] Mencari PhysicsImpostor di mesh atau anak-anaknya (rekursif).
+ * Mencari PhysicsImpostor di mesh atau anak-anaknya (rekursif).
  * Ini PENTING karena impostor mungkin tidak ada di root mesh.
  * @param {BABYLON.AbstractMesh} mesh
  * @returns {BABYLON.PhysicsImpostor | null}
@@ -76,7 +76,6 @@ function findPhysicsImpostor(mesh) {
 
 
 /**
- * [VERSI TERBARU]
  * Menyiapkan listener input khusus untuk VR (Controller)
  * dengan logika Hold, Release, dan Physics handling.
  * @param {BABYLON.WebXRDefaultExperience} xr 
@@ -87,7 +86,6 @@ function setupVRInput(xr, scene) {
     xr.input.onControllerAddedObservable.add((controller) => {
         console.log("VR Controller ditambahkan:", controller.inputSource.handedness);
 
-        // [MODIFIKASI] Kita simpan objek, berisi mesh root dan impostor-nya
         let heldItem = {
             mesh: null,
             impostor: null
@@ -98,7 +96,6 @@ function setupVRInput(xr, scene) {
             if (motionController) {
                 console.log("Motion Controller siap:", motionController.id, "Hand:", controller.inputSource.handedness);
 
-                // Kita hanya peduli controller KANAN untuk grab
                 if (controller.inputSource.handedness === 'right') {
                     
                     const triggerComponent = motionController.getComponent(BABYLON.WebXRControllerComponent.TRIGGER);
@@ -112,11 +109,11 @@ function setupVRInput(xr, scene) {
                                 // --- GRAB ---
                                 console.log("VR Trigger Kanan DITEKAN");
 
-                                if (!heldItem.mesh) { // Cek jika kita belum memegang apa-apa
+                                if (!heldItem.mesh) { 
                                     const ray = new BABYLON.Ray(
                                         controller.pointer.position,
                                         controller.pointer.forward,
-                                        5.0 // Jarak ray 5m
+                                        5.0 
                                     );
                                     
                                     const pickResult = scene.pickWithRay(ray);
@@ -124,28 +121,26 @@ function setupVRInput(xr, scene) {
                                     if (pickResult.hit && pickResult.pickedMesh) {
                                         
                                         console.log("Raycast HIT:", pickResult.pickedMesh.name);
-                                        const grabbableMesh = findGrabbableParent(pickResult.pickedMesh);
+                                        // findGrabbableParent akan menemukan "Wrapper"
+                                        const grabbableMesh = findGrabbableParent(pickResult.pickedMesh); 
                                         
                                         if (grabbableMesh) {
                                             const itemName = grabbableMesh.metadata.itemData ? grabbableMesh.metadata.itemData.title : grabbableMesh.name;
                                             console.log("VR Grab: Memegang ->", itemName);
                                             
-                                            // [INTI BARU] Cari impostor di mesh atau anaknya
+                                            // findPhysicsImpostor akan menemukan impostor di "Wrapper"
                                             const impostor = findPhysicsImpostor(grabbableMesh);
                                             
                                             if (impostor) {
                                                 console.log("Physics impostor ditemukan, massa di-set ke 0.");
                                                 impostor.setMass(0);
-                                                // impostor.sleep(); // Opsional
                                             } else {
                                                 console.log("Item grabbable, tapi tidak ada physics impostor.");
                                             }
 
-                                            // [INTI BARU] Simpan referensi ke keduanya
                                             heldItem.mesh = grabbableMesh;
                                             heldItem.impostor = impostor;
 
-                                            // Lakukan parenting
                                             grabbableMesh.setParent(controller.pointer);
 
                                         } else {
@@ -161,24 +156,21 @@ function setupVRInput(xr, scene) {
                                 // --- RELEASE ---
                                 console.log("VR Trigger Kanan DILEPAS");
 
-                                if (heldItem.mesh) { // Cek jika kita sedang memegang sesuatu
+                                if (heldItem.mesh) { 
                                     const itemName = heldItem.mesh.metadata.itemData ? heldItem.mesh.metadata.itemData.title : heldItem.mesh.name;
                                     console.log("VR Release: Melepas ->", itemName);
                                     
-                                    // 1. Lepas dari parent
                                     heldItem.mesh.setParent(null);
                                     
-                                    // 2. Aktifkan kembali physics (jika ada)
                                     if (heldItem.impostor) {
                                         console.log("Physics impostor diaktifkan kembali, massa di-set ke 0.01.");
                                         
-                                        // [PERBAIKAN 4] Ubah massa kembali ke 0.01, bukan 1
+                                        // [PERBAIKAN KONSISTENSI MASSA]
                                         heldItem.impostor.setMass(0.01); 
                                         
                                         heldItem.impostor.wakeUp();
                                     }
                                     
-                                    // 3. Kosongkan referensi
                                     heldItem.mesh = null;
                                     heldItem.impostor = null;
                                 }
@@ -206,12 +198,10 @@ function setupGrabLogic(scene, xr) {
     // ===================================
     scene.onPointerObservable.add((pointerInfo) => {
         
-        // Hanya proses jika input adalah mouse
         if (pointerInfo.event.pointerType !== 'mouse') {
             return;
         }
 
-        // Hanya proses saat tombol mouse ditekan
         if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERDOWN) {
             
             const pickResult = pointerInfo.pickInfo;
@@ -219,16 +209,14 @@ function setupGrabLogic(scene, xr) {
                 return;
             }
 
-            // --- LOGIKA NON-VR (DESKTOP) ---
             if (pointerInfo.event.button === 0) { // 0 = Klik Kiri
                 
-                // Gunakan fungsi helper untuk mencari parent
                 const grabbableMesh = findGrabbableParent(pickResult.pickedMesh);
                 
                 if (grabbableMesh) {
                     const itemName = grabbableMesh.metadata.itemData ? grabbableMesh.metadata.itemData.title : grabbableMesh.name;
                     console.log("Mouse: Kena item ->", itemName);
-                    pickUpItem(grabbableMesh); // Logika mouse tetap 'ambil' (bukan hold)
+                    pickUpItem(grabbableMesh); 
                 } else {
                     console.log("Mouse: Kena mesh, tapi tidak grabbable/GUI:", pickResult.pickedMesh.name);
                 }
