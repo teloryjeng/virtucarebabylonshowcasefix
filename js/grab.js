@@ -8,7 +8,6 @@ function setupVRInput(xr, scene) {
     xr.input.onControllerAddedObservable.add((controller) => {
         console.log("VR Controller ditambahkan:", controller.inputSource.handedness);
 
-        // [BARU] Variabel state untuk melacak item yang sedang dipegang oleh controller INI
         let heldItem = null;
         
         controller.onMotionControllerInitObservable.add((motionController) => {
@@ -16,70 +15,78 @@ function setupVRInput(xr, scene) {
             if (motionController) {
                 console.log("Motion Controller siap:", motionController.id, "Hand:", controller.inputSource.handedness);
 
-                // Kita hanya peduli dengan controller kanan untuk grab
                 if (controller.inputSource.handedness === 'right') {
                     
                     const triggerComponent = motionController.getComponent(BABYLON.WebXRControllerComponent.TRIGGER);
                     
                     if (triggerComponent) {
                         
-                        // [MODIFIKASI] Kita akan mengecek state 'pressed' (ditekan) dan 'released' (dilepas)
                         triggerComponent.onButtonStateChangedObservable.add((component) => {
                             
-                            // 'component.pressed' akan bernilai 'true' saat ditekan, dan 'false' saat dilepas
                             if (component.pressed) {
                                 
-                                // --- AWAL LOGIKA GRAB (SAAT TRIGGER DITEKAN) ---
+                                // --- GRAB ---
                                 console.log("VR Trigger Kanan DITEKAN");
 
-                                // Hanya lakukan raycast jika kita tidak sedang memegang apa-apa
                                 if (!heldItem) {
                                     const ray = new BABYLON.Ray(
-                                        controller.pointer.position, // Posisi controller
-                                        controller.pointer.forward,  // Arah controller
-                                        2.0 // Jarak ray (2 meter)
+                                        controller.pointer.position,
+                                        controller.pointer.forward,
+                                        5.0 // [DEBUG] Jarak ray diperpanjang jadi 5m
                                     );
                                     
                                     const pickResult = scene.pickWithRay(ray);
 
-                                    // Cek apakah mengenai sesuatu
                                     if (pickResult.hit && pickResult.pickedMesh) {
                                         
-                                        // Gunakan fungsi helper yang sudah ada
+                                        // [DEBUG] Log apa yang kena
+                                        console.log("Raycast HIT:", pickResult.pickedMesh.name);
+                                        
                                         const grabbableMesh = findGrabbableParent(pickResult.pickedMesh);
                                         
                                         if (grabbableMesh) {
                                             console.log("VR Grab: Memegang ->", grabbableMesh.name);
                                             
-                                            // [INTI] Jadikan controller sebagai parent dari mesh
+                                            // [PENTING] Nonaktifkan physics saat dipegang
+                                            if (grabbableMesh.physicsImpostor) {
+                                                console.log("Physics dinonaktifkan untuk:", grabbableMesh.name);
+                                                grabbableMesh.physicsImpostor.setMass(0);
+                                                // Anda mungkin juga perlu: grabbableMesh.physicsImpostor.sleep();
+                                            }
+
                                             grabbableMesh.setParent(controller.pointer);
-                                            
-                                            // [INTI] Simpan referensi item yang dipegang
                                             heldItem = grabbableMesh;
 
-                                            // Kita TIDAK memanggil pickUpItem() lagi,
-                                            // karena kita tidak ingin itemnya hilang.
+                                        } else {
+                                            // [DEBUG] Kena, tapi tidak grabbable
+                                            console.log("Raycast HIT, tapi item tidak 'grabbable' (cek metadata).");
                                         }
+                                    } else {
+                                        // [DEBUG] Tidak kena apa-apa
+                                        console.log("Raycast MISS (tidak kena objek).");
                                     }
                                 }
-                                // --- AKHIR LOGIKA GRAB ---
 
                             } else {
 
-                                // --- AWAL LOGIKA RELEASE (SAAT TRIGGER DILEPAS) ---
+                                // --- RELEASE ---
                                 console.log("VR Trigger Kanan DILEPAS");
 
-                                // Cek apakah kita sedang memegang item
                                 if (heldItem) {
                                     console.log("VR Release: Melepas ->", heldItem.name);
-
-                                    // [INTI] Lepaskan item kembali ke scene (world)
+                                    
+                                    // [PENTING] Lepas dari parent
                                     heldItem.setParent(null);
                                     
-                                    // [INTi] Kosongkan referensi
+                                    // [PENTING] Aktifkan kembali physics
+                                    if (heldItem.physicsImpostor) {
+                                        console.log("Physics diaktifkan kembali untuk:", heldItem.name);
+                                        heldItem.physicsImpostor.setMass(1); // Asumsi massa = 1
+                                        heldItem.physicsImpostor.wakeUp();
+                                    }
+                                    
                                     heldItem = null;
                                 }
-                                // --- AKHIR LOGIKA RELEASE ---
                             }
                         });
                     } else {
