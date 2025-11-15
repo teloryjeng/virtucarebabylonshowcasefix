@@ -49,13 +49,19 @@ function setupGrabLogic(scene, xr) {
             if (xr && xr.baseExperience.state === BABYLON.WebXRState.IN_XR) {
                 
                 // --- LOGIKA VR ---
-                const controller = xr.input.getControllerByPointerId(pointerInfo.event.pointerId);
+                const inputSource = pointerInfo.inputSource;
 
-                // Cek apakah controller ada dan merupakan TANGAN KANAN
-                if (controller && controller.inputSource && controller.inputSource.handedness === 'right') {
+                // Cek apakah event ini berasal dari controller,
+                // DAN apakah controller itu tangan KANAN
+                if (inputSource && inputSource.handedness === 'right') {
+                    
                     // Ini adalah 'Right Trigger'
                     pickUpItem(pickResult.pickedMesh);
                 }
+                // Jika event dari tangan kiri, atau bukan controller,
+                // maka akan diabaikan.
+                
+                // =======================================================
                 
             } else {
                 
@@ -71,4 +77,3 @@ function setupGrabLogic(scene, xr) {
 
     console.log("✅ Logika Grab (pickUpItem) dari file eksternal aktif.");
 }
-
