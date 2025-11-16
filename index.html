@@ -863,8 +863,7 @@ function handleLanjutClick() {
 }
     
 // 7. --- Membuat UI Dapat Di-"Grab" (Digeser) ---
-const grabBehavior = new BABYLON.SixDofDragBehavior();
-grabBehavior.allowMultiPointer = true;
+const grabBehavior = new BABYLON.PointerDragBehavior();
 uiPlane.addBehavior(grabBehavior);
 
 // +++ BARU +++ Tambahkan juga grab behavior ke MESH KEDUA
