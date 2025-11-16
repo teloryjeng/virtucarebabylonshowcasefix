@@ -6,7 +6,7 @@
 // <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
 // ==========================================================
 
-async function initMaskotAI(scene, camera) {
+async function initMaskotAI(scene) {
   if (!BABYLON.GUI) {
     console.error("BABYLON.GUI belum dimuat! Tambahkan babylon.gui.min.js di HTML kamu.");
     return;
@@ -30,15 +30,21 @@ async function initMaskotAI(scene, camera) {
       maskot.rotation = new BABYLON.Vector3(0, -Math.PI / 2, -.2);
 
       // Atur posisi awal relatif ke kamera
-      maskotPivot.position = camera.position.add(new BABYLON.Vector3(-1.6, -1.5, 1.2));
+      maskotPivot.position = scene.activeCamera.position.add(new BABYLON.Vector3(-1.6, -1.5, 1.2));
 
       // ==========================================================
       // Gerak mengikuti player
       // ==========================================================
       scene.onBeforeRenderObservable.add(() => {
-        const targetPos = camera.position.add(new BABYLON.Vector3(-1.6, -1.5, 1.2));
-        maskotPivot.position = BABYLON.Vector3.Lerp(maskotPivot.position, targetPos, 0.05);
-        maskotPivot.lookAt(camera.position);
+        // Selalu gunakan kamera yang sedang aktif (desktop atau VR)
+  const activeCam = scene.activeCamera;
+
+  const targetPos = activeCam.position.add(new BABYLON.Vector3(-1.6, -1.5, 1.2));
+  maskotPivot.position = BABYLON.Vector3.Lerp(maskotPivot.position, targetPos, 0.05);
+
+  // Buat target lookAt hanya di sumbu XZ (horizontal)
+  const lookTarget = new BABYLON.Vector3(activeCam.position.x, maskotPivot.position.y, activeCam.position.z);
+  maskotPivot.lookAt(lookTarget);
       });
 
       
