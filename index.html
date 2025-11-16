@@ -42,7 +42,8 @@
       // ================================
       const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 100, height: 100 }, scene);
       ground.checkCollisions = true;
-      ground.position.y = 0;
+      ground.position.y = 0.12;
+      ground.isVisible = false;
 
       // Tambahkan Physics Impostor agar terpengaruh fisika
       ground.physicsImpostor = new BABYLON.PhysicsImpostor(
