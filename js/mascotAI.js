@@ -27,7 +27,7 @@ async function initMaskotAI(scene) {
       maskot.position = BABYLON.Vector3.Zero();
 
       // Koreksi arah depan model (atur sesuai model kamu)
-      maskot.rotation = new BABYLON.Vector3(0, -Math.PI / 2, -.2);
+      maskot.rotation = new BABYLON.Vector3(0, -Math.PI / 2, 0);
 
       // Atur posisi awal relatif ke kamera
       maskotPivot.position = scene.activeCamera.position.add(new BABYLON.Vector3(-1.6, -1.5, 1.2));
@@ -117,4 +117,5 @@ async function getAIResponse(question) {
 
   return responses[Math.floor(Math.random() * responses.length)];
 }
+
 
