@@ -15,6 +15,7 @@
 
   <script src="js/physics.js"></script>
   <script src="js/interactions.js"></script>
+  <script src="js/mascotAI.js"></script>
 </head>
 <body>
   <canvas id="renderCanvas"></canvas>
@@ -86,7 +87,7 @@
                  });
           }
       }).catch((error) => { console.error("Gagal memuat model:", error); });
-
+      
       // ================================
       // Aktifkan VR / XR Mode
       // ================================
@@ -262,6 +263,12 @@
                   const result = await BABYLON.SceneLoader.ImportMeshAsync("", "assets/", itemData.file, scene);
                   const rootMesh = result.meshes[0];
                   rootMesh.name = itemData.id;
+                  if (itemData.id === "meshTiangInfus") {
+           console.log("--- DEBUG LOAD ITEM ---");
+           console.log("Nama disetel ke:", rootMesh.name);
+           console.log("Tipe Class:", rootMesh.getClassName());
+           console.log("result.meshes[0]:", result.meshes[0]);
+         }
                   if (isGrabbable){
                       rootMesh.isPickable=true;
                       rootMesh.metadata = { isGrabbable: true, itemData: itemData };
@@ -356,7 +363,12 @@
       const loadPromises = itemDatabase.map(item => loadItem(item));
       await Promise.all(loadPromises);
       console.log("✅ Semua 10 item berhasil dimuat.");
-
+      scene.rootNodes.forEach(node => {
+     // Log semua node, atau filter yang mirip "infus"
+     if (node.name.includes("Infus") || node.name.includes("meshT")) {
+       console.log(`NAMA: ${node.name}, TIPE: ${node.getClassName()}`);
+     }
+   });
       // 4. Buat Kanvas dan Panel UI (Shared)
       const infoPlane = BABYLON.MeshBuilder.CreatePlane("infoPlane", {width: 1, height: 0.6}, scene);
       
@@ -445,51 +457,69 @@
       // ================================
       // (Fitur pointer selection sudah aktif otomatis oleh createDefaultXRExperience)
 
-      itemDatabase.forEach(item => {
-          // 1. Dapatkan mesh INDUK (wrapper/mesh non-fisika)
-          const targetMesh = scene.getMeshByName(item.id);
+      // ================================
+   // 6. Loop untuk Membuat Tombol Tautan 3D (FIX WAJIB)
+   // ================================
+   console.log("Memulai pembuatan UI tombol 3D...");
 
-          if (targetMesh) {
-              // 2. Buat Tombol "i" 3D (sebagai plane kecil)
-              // Ukuran 0.15 x 0.15 meter (sesuaikan jika perlu)
-              const buttonPlane = BABYLON.MeshBuilder.CreatePlane(`btn_plane_${item.id}`, {size: 0.15}, scene);
+   itemDatabase.forEach(item => {
+     // 1. Dapatkan NODE INDUK (WAJIB GANTI KE GETNODEBYNAME)
+     const targetNode = scene.getNodeByName(item.id); // <-- INI DIA BIANG KEROKNYA
 
-              // 3. Tautkan tombol ke 'targetMesh'
-              buttonPlane.parent = targetMesh;
+     // 2. Cek node (SEKARANG AKAN SUKSES UNTUK TIANG INFUS)
+     if (targetNode) {
+       
+       // 3. Buat Tombol "i" 3D (sebagai plane kecil)
+       const buttonPlane = BABYLON.MeshBuilder.CreatePlane(`btn_plane_${item.id}`, {size: 0.15}, scene);
+        if (item.id === "meshTiangInfus") {
+       console.log("--- DEBUG BAGIAN 6 ---");
+       console.log("Mencari node dgn nama:", item.id);
+       console.log("Hasil pencarian (targetNode):", targetNode);
+     }
+       // 4. Tautkan tombol ke 'targetNode'
+       buttonPlane.parent = targetNode;
 
-              // 4. Posisikan di atas target mesh
-              // Dapatkan ukuran bounding box dari target
-              let boundingBox = targetMesh.getHierarchyBoundingVectors(true);
-              // Hitung posisi Y relatif dari pusat wrapper ke puncaknya
-              let relativeTopY = boundingBox.max.y - targetMesh.position.y;
-              
-              // Posisikan tombol 0.3 meter di atas titik tertinggi mesh
-              buttonPlane.position = new BABYLON.Vector3(0, relativeTopY + 0.3, 0);
+       // 5. Posisikan di atas PUSAT Bounding Box (Lebih Akurat)
+       const boundingBox = targetNode.getHierarchyBoundingVectors(true); 
+       const parentWorldPos = targetNode.getAbsolutePosition();
 
-              // 5. Buat tombol "i" 3D
-              let adtButton = BABYLON.GUI.AdvancedDynamicTexture.CreateForMesh(buttonPlane);
-              let btn = BABYLON.GUI.Button.CreateSimpleButton(`btn_gui_${item.id}`, "i");
-              btn.widthInPixels = 800;
-              btn.heightInPixels = 800;
-              btn.cornerRadius = 500;
-              btn.color = "white";
-              btn.thickness = 8;
-              btn.background = "blue";
-              btn.fontSize = 400;
-              adtButton.addControl(btn);
-              
-              // 6. Buat tombol selalu menghadap kamera
-              buttonPlane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+       const center_X_world = (boundingBox.min.x + boundingBox.max.x) / 2;
+       const center_Z_world = (boundingBox.min.z + boundingBox.max.z) / 2;
+       const top_Y_world = boundingBox.max.y;
 
-              // 7. Tambahkan aksi klik
-              // Pointer VR akan otomatis mendeteksi 'onPointerClickObservable' pada GUI di mesh
-              btn.onPointerClickObservable.add(() => {
-                  showInfo(item);
-              });
-          } else {
-              console.warn(`Mesh UI untuk "${item.id}" tidak ditemukan.`);
-          }
-      });
+       const relative_X = center_X_world - parentWorldPos.x;
+       const relative_Y = top_Y_world - parentWorldPos.y;
+       const relative_Z = center_Z_world - parentWorldPos.z;
+
+       buttonPlane.position = new BABYLON.Vector3(
+         relative_X,
+         relative_Y + 0.3, // 0.3 meter di atas titik tertinggi
+         relative_Z
+       );
+
+       // 6. Buat tombol "i" 3D
+       let adtButton = BABYLON.GUI.AdvancedDynamicTexture.CreateForMesh(buttonPlane);
+       let btn = BABYLON.GUI.Button.CreateSimpleButton(`btn_gui_${item.id}`, "i");
+       btn.widthInPixels = 800;
+       btn.heightInPixels = 800;
+       btn.cornerRadius = 500;
+       btn.color = "white";
+       btn.thickness = 8;
+       btn.background = "blue";
+       btn.fontSize = 400;
+       adtButton.addControl(btn);
+       
+       // 7. Buat tombol selalu menghadap kamera
+       buttonPlane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+
+       // 8. Tambahkan aksi klik
+       btn.onPointerClickObservable.add(() => {
+         showInfo(item);
+       });
+     } else {
+       console.warn(`!!! GAGAL MENEMUKAN NODE UNTUK UI: "${item.id}" !!!`);
+     }
+   });
 
       // ================================================================
       // === AKHIR KODE BARU ===
@@ -521,6 +551,335 @@
       infuscollision.checkCollisions = true;
 
       setupVRInput(xr, scene);
+      const maskotPivot = await initMaskotAI(scene, camera);
+console.log("Maskot pivot berhasil dimuat:", maskotPivot);
+
+
+    let currentState=1;
+    let dialogTitle; // Judul terpisah (Halo, Calon Dokter!)
+    let dialogBody; // Teks isi
+    let lanjutButton;
+    let finalButtonsContainer;
+    let charIndex = 0;
+    let isTyping = false;
+    let currentTextTarget = "";
+    let typeObserver=null;
+    const TYPING_SPEED=3;
+
+    // --- DATA TEKS DIPISAH ---
+    const TAHAP_1_JUDUL = "Selamat Datang di Showcase VirtuCare!";
+    const TAHAP_1_BODY = "Di sepanjang perjalanan, Anda akan menemukan berbagai alat medis yang menampilkan informasi dari setiap alat. Gunakan kesempatan ini untuk mengamati dan mengenali setiap alat yang dipamerkan.";
+    const TAHAP_2_BODY = "Setelah kamu mengenal alat-alat ini, bersiaplah untuk memasuki simulasi praktik.Di sana, kamu akan diuji untuk menerapkan apa yang telah kamu pelajari dalam situasi yang menyerupai dunia nyata. Jika ada yang ditanyakan, jangan ragu untuk bertanya kepada aku ya!!";
+    const TAHAP_3_TEXT_FULL = "Siap melakukan simulasi?";
+    const TAHAP_4_BODY = "Baik, karena belum siap melakukan simulasi, silahkan menunggu sampai kamu siap untuk melakukan simulasi.";
+    const TAHAP_5_BODY = "Baik, karena kamu sudah siap untuk melakukan simulasi, akan saya antarkan ke ruang pemeriksaan!";
+    
+    // --- FUNGSI TYPEWRITER EFFECT (TETAP SAMA) ---
+function typeWriterEffect(targetText, textBlock, scene, onComplete = () => {}) {
+    // ... (Tidak ada perubahan di sini, sama seperti kode Anda)
+    if (isTyping) {
+        if (typeObserver) {
+            scene.onBeforeRenderObservable.remove(typeObserver);
+        }
+    }
+    isTyping = true;
+    charIndex = 0;
+    currentTextTarget = targetText;
+    textBlock.text = ""; 
+    if (lanjutButton) {
+        lanjutButton.isHitTestVisible = false;
+    }
+    typeObserver = scene.onBeforeRenderObservable.add(() => {
+        if (isTyping && charIndex <= currentTextTarget.length) {
+            if (scene.getEngine().frameId % TYPING_SPEED === 0) { 
+                textBlock.text = currentTextTarget.substring(0, charIndex);
+                charIndex++;
+            }
+        } else if (isTyping) {
+            textBlock.text = currentTextTarget;
+            isTyping = false;
+            scene.onBeforeRenderObservable.remove(typeObserver);
+            typeObserver = null;
+            onComplete(); 
+        }
+    });
+}
+
+// --- PEMBUATAN UI ---
+    
+// 1. Buat Mesh (Plane) UNTUK PANEL UTAMA
+const uiPlane = BABYLON.MeshBuilder.CreatePlane("uiPlane", scene);
+uiPlane.parent = maskotPivot;
+uiPlane.position = new BABYLON.Vector3(0, 2.5, 0); // Posisi asli Anda
+uiPlane.rotation.x = -.5;
+uiPlane.rotation.y = -3.2;
+uiPlane.scaling.scaleInPlace(3);
+uiPlane.isVisible = true; // Panel utama terlihat di awal
+
+// 2. Buat AdvancedDynamicTexture UNTUK PANEL UTAMA
+const adt = BABYLON.GUI.AdvancedDynamicTexture.CreateForMesh(uiPlane, 3000, 3000);
+        
+// 3. Buat Panel Utama
+const mainPanel = new BABYLON.GUI.Rectangle("mainPanel");
+mainPanel.widthInPixels = 2000;
+mainPanel.heightInPixels = 1300;
+mainPanel.background = "rgba(20, 50, 130, 0.5)";
+mainPanel.cornerRadius = 50;
+mainPanel.thickness = 10;
+mainPanel.color = "white";
+adt.addControl(mainPanel);
+
+// 5. Buat StackPanel
+const stackPanel = new BABYLON.GUI.StackPanel("buttonStack");
+stackPanel.widthInPixels = 1800;
+stackPanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+mainPanel.addControl(stackPanel);
+
+// 5A. Text Block untuk Judul
+dialogTitle = new BABYLON.GUI.TextBlock("dialogTitle", "");
+dialogTitle.color = "#FFD700"; 
+dialogTitle.heightInPixels = 150;
+dialogTitle.fontSizeInPixels = 90;
+dialogTitle.fontStyle = "bold"; 
+dialogTitle.textWrapping = true;
+dialogTitle.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+dialogTitle.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+stackPanel.addControl(dialogTitle);
+
+// 5B. Text Block untuk Isi
+dialogBody = new BABYLON.GUI.TextBlock("dialogBody", "");
+dialogBody.color = "white";
+dialogBody.heightInPixels = 500; 
+dialogBody.fontSizeInPixels = 70;
+dialogBody.paddingBottomInPixels = 10;
+dialogBody.textWrapping = true;
+dialogBody.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+dialogBody.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+stackPanel.addControl(dialogBody); 
+    
+// 6. Buat Tombol "Lanjut"
+lanjutButton = BABYLON.GUI.Button.CreateSimpleButton("lanjut", "Lanjut");
+lanjutButton.widthInPixels = 500;
+lanjutButton.heightInPixels = 150;
+lanjutButton.background = "#5CB85C";
+lanjutButton.color = "white";
+lanjutButton.fontSizeInPixels = 50;
+lanjutButton.cornerRadius = 20;
+lanjutButton.paddingTopInPixels = 20;
+lanjutButton.thickness = 3;
+lanjutButton.onPointerClickObservable.add(handleLanjutClick);
+stackPanel.addControl(lanjutButton);
+
+
+// =================================================================
+// +++ BARU +++ MEMBUAT PLANE DAN ADT KEDUA UNTUK KONFIRMASI
+// =================================================================
+
+// +++ BARU +++ Buat Mesh (Plane) KEDUA di lokasi yang "JAUH"
+const uiPlaneConfirmation = BABYLON.MeshBuilder.CreatePlane("uiPlaneConfirmation", scene);
+// Posisikan di tempat lain, misalnya di 0, 2.8, 4 (lebih dekat ke tengah dan lebih depan)
+uiPlaneConfirmation.position = new BABYLON.Vector3(-15, 2, 17.7); 
+// uiPlaneConfirmation.rotation.y = 0; // Mungkin menghadap lurus
+uiPlaneConfirmation.scaling.scaleInPlace(3);
+uiPlaneConfirmation.isVisible = false; // Sembunyi di awal
+
+// +++ BARU +++ Buat AdvancedDynamicTexture KEDUA
+const adtConfirmation = BABYLON.GUI.AdvancedDynamicTexture.CreateForMesh(uiPlaneConfirmation, 3000, 3000);
+
+
+// =================================================================
+// PANEL 2: KONFIRMASI (TAHAP 3)
+// =================================================================
+
+// Buat Panel Konfirmasi
+const confirmationPanel = new BABYLON.GUI.Rectangle("confirmationPanel");
+confirmationPanel.widthInPixels = 1800; // Sedikit lebih ramping
+confirmationPanel.heightInPixels = 700; // Lebih pendek
+confirmationPanel.background = "rgba(50, 20, 130, 0.6)"; // Warna sedikit beda
+confirmationPanel.cornerRadius = 50;
+confirmationPanel.thickness = 10;
+confirmationPanel.color = "white";
+// --- DIMODIFIKASI --- Tambahkan ke ADT KEDUA
+adtConfirmation.addControl(confirmationPanel);
+
+// Buat StackPanel untuk confirmationPanel
+const confirmationStack = new BABYLON.GUI.StackPanel("confirmationStack");
+confirmationStack.widthInPixels = 1600;
+confirmationStack.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+confirmationPanel.addControl(confirmationStack);
+
+// TextBlock untuk pertanyaan konfirmasi
+const confirmationTitle = new BABYLON.GUI.TextBlock("confirmationTitle", "");
+confirmationTitle.color = "white";
+confirmationTitle.heightInPixels = 300;
+confirmationTitle.fontSizeInPixels = 90;
+confirmationTitle.paddingBottomInPixels = 50;
+confirmationTitle.textWrapping = true;
+confirmationTitle.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+confirmationTitle.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+confirmationStack.addControl(confirmationTitle);
+
+// 7. Buat Container Tombol Akhir
+finalButtonsContainer = new BABYLON.GUI.StackPanel("finalButtonsContainer");
+finalButtonsContainer.isVertical = false;
+finalButtonsContainer.heightInPixels = 150;
+finalButtonsContainer.isVisible = true; 
+finalButtonsContainer.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+finalButtonsContainer.spacing = 50;
+confirmationStack.addControl(finalButtonsContainer);
+
+
+// --- FUNGSI HELPER TOMBOL (Tidak Berubah) ---
+const createFinalButton = (name, text, color, onClickHandler) => {
+    // ... (Tidak ada perubahan di sini)
+    const button = BABYLON.GUI.Button.CreateSimpleButton(name, text);
+    button.widthInPixels = 500;
+    button.heightInPixels = 100;
+    button.background = color;
+    button.color = "white";
+    button.fontSizeInPixels = 40;
+    button.cornerRadius = 20;
+    button.thickness = 3;
+    button.onPointerClickObservable.add(onClickHandler);
+    return button;
+};
+const goToShowcase = () => {
+    window.location.href = "showcase.html";
+};
+const goToPemeriksaan = () => {
+    window.location.href = "pemeriksaan.html";
+};
+
+// --- HANDLER TOMBOL AKHIR (Logika Diperbarui) ---
+
+// Handler untuk tombol di Tahap 3
+const onSiapClick = () => { 
+        console.log("Memulai Simulasi..."); 
+        currentState = 5;
+
+        // 1. Sembunyikan tombol-tombolnya
+        finalButtonsContainer.isVisible = false; 
+
+        // 2. Panel konfirmasi (uiPlaneConfirmation) TETAP TERLIHAT.
+        //    Panel utama (uiPlane) TETAP HILANG.
+
+        // 3. Ubah pengaturan 'confirmationTitle' agar pas untuk teks panjang
+        confirmationTitle.heightInPixels = 500; // Beri ruang lebih
+        confirmationTitle.fontSizeInPixels = 70; // Samakan font-size dgn dialogBody
+        confirmationTitle.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+
+        // 4. Jalankan typewriter di 'confirmationTitle' (teks di panel 2)
+        typeWriterEffect(TAHAP_5_BODY, confirmationTitle, scene, () => {
+            // 5. Navigasi setelah selesai
+            setTimeout(() => {
+                goToPemeriksaan();
+            }, 1000);
+        });   
+    };
+        
+    const onBelumSiapClick = () => { 
+        console.log("Belum siap diklik!"); 
+        currentState = 4;
+        // 1. Sembunyikan container tombol
+        finalButtonsContainer.isVisible = false; 
+        
+        // 2. Ubah style teks agar muat untuk pesan panjang
+        confirmationTitle.heightInPixels = 500;
+        confirmationTitle.fontSizeInPixels = 70;
+        confirmationTitle.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+        
+        // 3. Ketik pesan TAHAP_4_BODY ("Baik, karena belum siap...")
+        typeWriterEffect(TAHAP_4_BODY, confirmationTitle, scene, () => {
+            
+            // 4. (CALLBACK 1) Setelah pesan TAHAP 4 selesai:
+            //    Tunggu 2 detik agar pesan bisa dibaca
+            setTimeout(() => {
+                
+                // 5. Kembalikan style teks ke style pertanyaan awal
+                confirmationTitle.heightInPixels = 300;
+                confirmationTitle.fontSizeInPixels = 90;
+                confirmationTitle.paddingBottomInPixels = 50; // Kembalikan padding
+                confirmationTitle.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+
+                // 6. Ketik ulang pertanyaan TAHAP_3_TEXT_FULL ("Siap simulasi?")
+                typeWriterEffect(TAHAP_3_TEXT_FULL, confirmationTitle, scene, () => {
+                    
+                    // 7. (CALLBACK 2) Setelah pertanyaan selesai diketik ulang:
+                    currentState = 3; // Kembalikan state ke 3 (tahap konfirmasi)
+                    finalButtonsContainer.isVisible = true; // Munculkan lagi tombolnya
+                });
+
+            }, 2000);
+        }); 
+    };
+        
+    const onKeluarClick = () => { 
+        // (Fungsi ini tidak perlu diubah)
+        console.log("Keluar diklik!"); 
+        if (typeof xr !== 'undefined' && xr && xr.baseExperience.state === BABYLON.WebXRState.IN_XR) {
+            xr.baseExperience.exitXRAsync(); 
+        }
+    };
+
+// Buat dan tambahkan tombol akhir ke container (Tidak Berubah)
+const startButton = createFinalButton("start", "Siap!!", "#5CB85C", onSiapClick);
+const toolsButton = createFinalButton("tools", "Belum siap", "#428BCA", onBelumSiapClick);
+const exitButton = createFinalButton("exit", "Keluar", "#D9534F", onKeluarClick);
+finalButtonsContainer.addControl(startButton);
+finalButtonsContainer.addControl(toolsButton);
+finalButtonsContainer.addControl(exitButton);
+
+
+// --- FUNGSI LOGIKA PERGANTIAN TAHAP (HANDLE KLIK) ---
+// --- Diperbarui ---
+function handleLanjutClick() {
+    if (isTyping) return;
+    currentState++;
+    
+    if (currentState === 2) {
+        // TAHAP 2: (Logika tetap sama, masih di mainPanel)
+        dialogTitle.text = ""; 
+        dialogBody.heightInPixels = 700;
+        dialogBody.fontSizeInPixels = 70;
+        
+        typeWriterEffect(TAHAP_2_BODY, dialogBody, scene, () => {
+            lanjutButton.isHitTestVisible = true; 
+        });
+
+    } else if (currentState === 3) {
+        // TAHAP 3: Tampilkan panel konfirmasi
+        
+        // 1. --- DIMODIFIKASI --- Sembunyikan MESH utama
+        uiPlane.isVisible = false;
+        
+        // 2. --- DIMODIFIKASI --- Tampilkan MESH konfirmasi
+        uiPlaneConfirmation.isVisible = true;
+        
+        // 3. Jalankan typewriter di textblock konfirmasi (confirmationTitle)
+        typeWriterEffect(TAHAP_3_TEXT_FULL, confirmationTitle, scene, () => {
+            // Selesai
+        });
+    }
+}
+    
+// 7. --- Membuat UI Dapat Di-"Grab" (Digeser) ---
+const grabBehavior = new BABYLON.SixDofDragBehavior();
+grabBehavior.allowMultiPointer = true;
+uiPlane.addBehavior(grabBehavior);
+
+// +++ BARU +++ Tambahkan juga grab behavior ke MESH KEDUA
+const grabBehavior2 = new BABYLON.SixDofDragBehavior();
+grabBehavior2.allowMultiPointer = true;
+uiPlaneConfirmation.addBehavior(grabBehavior2);
+
+    
+// === MULAI ANIMASI PERTAMA DI SINI (TAHAP 1) ===
+// (Tidak berubah, dimulai di mainPanel)
+typeWriterEffect(TAHAP_1_JUDUL, dialogTitle, scene, () => {
+    typeWriterEffect(TAHAP_1_BODY, dialogBody, scene, () => {
+        lanjutButton.isHitTestVisible = true;
+    });
+});      
       return scene;
     }; // <-- Akhir dari createScene
     
